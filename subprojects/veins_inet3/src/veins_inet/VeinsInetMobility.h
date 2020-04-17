@@ -34,6 +34,9 @@
 #include "inet/common/geometry/common/CanvasProjection.h"
 #include "inet/mobility/contract/IMobility.h"
 
+#include "veins/modules/mobility/traci/TraCIScenarioManager.h"
+#include "veins/modules/mobility/traci/TraCICommandInterface.h"
+
 #include "veins_inet/veins_inet.h"
 
 #include "veins/modules/mobility/traci/TraCIScenarioManager.h"
@@ -70,17 +73,6 @@ public:
         return constraintAreaMin;
     }
 
-public:
-    virtual std::string getExternalId() const;
-    virtual TraCIScenarioManager* getManager() const;
-    virtual TraCICommandInterface* getCommandInterface() const;
-    virtual TraCICommandInterface::Vehicle* getVehicleCommandInterface() const;
-
-protected:
-    std::string external_id; /**< identifier used by TraCI server to refer to this node */
-    mutable TraCIScenarioManager* manager = nullptr; /**< cached value */
-    mutable TraCICommandInterface* commandInterface = nullptr; /**< cached value */
-    mutable TraCICommandInterface::Vehicle* vehicleCommandInterface = nullptr; /**< cached value */
 
 protected:
     cModule* visualRepresentation;
@@ -106,6 +98,18 @@ protected:
     virtual void updateVisualRepresentation();
 
     virtual void emitMobilityStateChangedSignal();
+
+public:
+    virtual std::string getExternalId() const;
+    virtual TraCIScenarioManager* getManager() const;
+    virtual TraCICommandInterface* getCommandInterface() const;
+    virtual TraCICommandInterface::Vehicle* getVehicleCommandInterface() const;
+
+protected:
+    std::string external_id; /**< identifier used by TraCI server to refer to this node */
+    mutable TraCIScenarioManager* manager = nullptr; /**< cached value */
+    mutable TraCICommandInterface* commandInterface = nullptr; /**< cached value */
+    mutable TraCICommandInterface::Vehicle* vehicleCommandInterface = nullptr; /**< cached value */
 };
 
 } // namespace veins
