@@ -577,8 +577,10 @@ void Mac1609_4::handleLowerMsg(cMessage* msg)
     if (dest == myMacAddr) {
         if (auto* ack = dynamic_cast<Mac80211Ack*>(macPkt)) {
             ASSERT(useAcks);
-            if (dblrand() >= ackErrorRate) handleAck(ack);
-            else EV_TRACE << "Artificially dropping ACK";
+            if (dblrand() >= ackErrorRate)
+                handleAck(ack);
+            else
+                EV_TRACE << "Artificially dropping ACK";
             delete res;
         }
         else {
