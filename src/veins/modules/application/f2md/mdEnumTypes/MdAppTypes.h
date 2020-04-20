@@ -22,19 +22,19 @@ enum App {
     BehavioralApp,
     CooperativeApp,
     ExperiApp,
-    PyBridgeApp,
+    MachineLearningApp,
 
     SIZE_OF_ENUM
 };
 
 static const char* AppNames[] = { "ThresholdApp", "AggrigationApp",
-        "CooperativeApp", "BehavioralApp", "ExperiApp", "PyBridgeApp" };
+        "CooperativeApp", "BehavioralApp", "ExperiApp", "MachineLearningApp" };
 
 static_assert(sizeof(mdAppTypes::AppNames)/sizeof(char*) == mdAppTypes::SIZE_OF_ENUM
         , "sizes dont match");
 
 static const mdAppTypes::App intApp[] = { ThresholdApp, AggrigationApp,
-        BehavioralApp, CooperativeApp, ExperiApp, PyBridgeApp };
+        BehavioralApp, CooperativeApp, ExperiApp, MachineLearningApp };
 
 static_assert(sizeof(mdAppTypes::intApp)/sizeof(mdAppTypes::App) == mdAppTypes::SIZE_OF_ENUM
         , "sizes dont match");

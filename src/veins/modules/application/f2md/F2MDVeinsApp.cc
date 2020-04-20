@@ -483,7 +483,7 @@ void JosephVeinsApp::setMDApp(mdAppTypes::App appTypeV1,
     case mdAppTypes::ExperiApp:
         AppV1 = &ExperV1;
         break;
-    case mdAppTypes::PyBridgeApp:
+    case mdAppTypes::MachineLearningApp:
         AppV1 = &PybgV1;
         PybgV1.setMyId(myId);
         break;
@@ -507,7 +507,7 @@ void JosephVeinsApp::setMDApp(mdAppTypes::App appTypeV1,
     case mdAppTypes::ExperiApp:
         AppV2 = &ExperV2;
         break;
-    case mdAppTypes::PyBridgeApp:
+    case mdAppTypes::MachineLearningApp:
         AppV2 = &PybgV2;
         PybgV2.setMyId(myId);
         break;

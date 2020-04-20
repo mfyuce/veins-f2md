@@ -9,8 +9,8 @@
  * All rights reserved.
  *******************************************************************************/
 
-#ifndef __VEINS_PyBridgeApp_H_
-#define __VEINS_PyBridgeApp_H_
+#ifndef __VEINS_MachineLearningApp_H_
+#define __VEINS_MachineLearningApp_H_
 
 #include <tuple>
 #include <omnetpp.h>
@@ -30,7 +30,7 @@
 using namespace veins;
 using namespace omnetpp;
 
-class PyBridgeApp: public MDApplication {
+class MachineLearningApp: public MDApplication {
 public:
 
     int port = 8888;
@@ -43,7 +43,7 @@ public:
 
     BsmPrintable bsmPrint;
 
-    PyBridgeApp(int version ,int port, std::string host);
+    MachineLearningApp(int version ,int port, std::string host);
 
     bool CheckNodeForReport(unsigned long myPseudonym,
             BasicSafetyMessage * bsm, BsmCheck * bsmCheck, NodeTable * detectedNodes);

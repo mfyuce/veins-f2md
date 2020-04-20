@@ -9,12 +9,12 @@
  * All rights reserved.
  *******************************************************************************/
 
-#include <veins/modules/application/f2md/mdApplications/PyBridgeApp.h>
+#include <veins/modules/application/f2md/mdApplications/MachineLearningApp.h>
 
 using namespace std;
 using namespace boost;
 
-PyBridgeApp::PyBridgeApp(int version, int port, std::string host) :
+MachineLearningApp::MachineLearningApp(int version, int port, std::string host) :
         MDApplication(version) {
     this->port = port;
     this->host = host;
@@ -22,11 +22,11 @@ PyBridgeApp::PyBridgeApp(int version, int port, std::string host) :
     bsmPrint = BsmPrintable();
 }
 
-void PyBridgeApp::setMyId(LAddress::L2Type myId) {
+void MachineLearningApp::setMyId(LAddress::L2Type myId) {
     this->myId = myId;
 }
 
-bool PyBridgeApp::CheckNodeForReport(unsigned long myPseudonym,
+bool MachineLearningApp::CheckNodeForReport(unsigned long myPseudonym,
         BasicSafetyMessage * bsm, BsmCheck * bsmCheck,
         NodeTable * detectedNodes) {
 
@@ -59,6 +59,6 @@ bool PyBridgeApp::CheckNodeForReport(unsigned long myPseudonym,
     return false;
 }
 
-double PyBridgeApp::getMinFactor() {
+double MachineLearningApp::getMinFactor() {
     return minFactor;
 }
