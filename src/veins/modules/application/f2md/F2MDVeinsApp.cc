@@ -188,6 +188,13 @@ void JosephVeinsApp::initialize(int stage) {
 
         reportProtocolEnforcerV1.setParams(&params);
         reportProtocolEnforcerV2.setParams(&params);
+
+        //mkdir savePath
+        struct stat info;
+        if ((stat(params.savePath.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR)) {
+            mkdir(params.savePath.c_str(), 0777);
+        }
+
         // F2MD init
 
     } else if (stage == 1) {
