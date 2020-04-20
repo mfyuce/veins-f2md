@@ -15,7 +15,7 @@
 
 import org.car2x.veins.nodes.Scenario;
 
-network UlmScenario3Drivers extends Scenario
+network UlmScenario extends Scenario
 {
 string traceJSONFile = default("JSONlog-");
 string traceGroundTruthJSONFile = default("GroundTruthJSONlog-");
