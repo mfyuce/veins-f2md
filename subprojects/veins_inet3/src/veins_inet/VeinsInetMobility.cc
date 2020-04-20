@@ -56,6 +56,7 @@ VeinsInetMobility::VeinsInetMobility()
 void VeinsInetMobility::preInitialize(std::string external_id, const inet::Coord& position, std::string road_id, double speed, double acceleration, double angle)
 {
     Enter_Method_Silent();
+    this->external_id = external_id;
     lastPosition = position;
     lastSpeed = inet::Coord(cos(angle), -sin(angle)) * speed;
     lastAcceleration = inet::Coord(cos(angle), -sin(angle)) * acceleration;
