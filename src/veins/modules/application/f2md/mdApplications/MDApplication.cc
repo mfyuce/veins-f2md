@@ -47,6 +47,9 @@ double MDApplication::getMinFactor() {
 
 void MDApplication::calculateMinFactor(BsmCheck * bsmCheck) {
     minFactor = 1;
+    if (bsmCheck->getProximityPlausibility() < minFactor) {
+        minFactor = bsmCheck->getProximityPlausibility();
+    }
     if (bsmCheck->getRangePlausibility() < minFactor) {
         minFactor = bsmCheck->getRangePlausibility();
     }
@@ -109,6 +112,13 @@ void MDApplication::calculateMinFactor(BsmCheck * bsmCheck) {
 }
 
 void MDApplication::incrementDetailedFlags(BasicSafetyMessage * bsm,BsmCheck * bsmCheck, double Threshold) {
+    if (bsmCheck->getProximityPlausibility() <= Threshold) {
+        prntApp->incFlags(mdChecksTypes::ProximityPlausibility,
+                mbTypes::intMbs[bsm->getSenderMbType()]);
+        prntAppInst->incFlags(mdChecksTypes::ProximityPlausibility,
+                mbTypes::intMbs[bsm->getSenderMbType()]);
+    }
+
     if (bsmCheck->getRangePlausibility() <= Threshold) {
         prntApp->incFlags(mdChecksTypes::RangePlausibility,
                 mbTypes::intMbs[bsm->getSenderMbType()]);

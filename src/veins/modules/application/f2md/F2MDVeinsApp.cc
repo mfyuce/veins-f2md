@@ -13,7 +13,8 @@
 
 Define_Module(JosephVeinsApp);
 
-void JosephVeinsApp::initialize(int stage) {
+void JosephVeinsApp::initialize(int stage)
+{
 
     F2MDBaseApplLayer::initialize(stage);
 
@@ -94,8 +95,11 @@ void JosephVeinsApp::initialize(int stage) {
         params.enableVarThreV2 = par("enableVarThreV2");
         //Simulation Parameters
 
-
         // ------ Detection Parameters -- Start
+        params.MAX_PROXIMITY_RANGE_L = par("MAX_PROXIMITY_RANGE_L");
+        params.MAX_PROXIMITY_RANGE_W = par("MAX_PROXIMITY_RANGE_W");
+        params.MAX_PROXIMITY_DISTANCE = par("MAX_PROXIMITY_DISTANCE");
+
         params.MAX_CONFIDENCE_RANGE = par("MAX_CONFIDENCE_RANGE");
         params.MAX_PLAUSIBLE_RANGE = par("MAX_PLAUSIBLE_RANGE");
         params.MAX_TIME_DELTA = par("MAX_TIME_DELTA");
@@ -196,8 +200,8 @@ void JosephVeinsApp::initialize(int stage) {
         }
 
         // F2MD init
-
-    } else if (stage == 1) {
+    }
+    else if (stage == 1) {
         EV << "Initializing " << par("appName").stringValue() << std::endl;
 
         myVType = traciVehicle->getVType();
@@ -215,7 +219,7 @@ void JosephVeinsApp::initialize(int stage) {
         myLength = traciVehicle->getLength();
 
         myMdType = induceMisbehavior(params.LOCAL_ATTACKER_PROB,
-                params.GLOBAL_ATTACKER_PROB);
+            params.GLOBAL_ATTACKER_PROB);
 
         if (params.UseAttacksServer) {
             localAttackServer.pingAttackServer();
@@ -226,7 +230,8 @@ void JosephVeinsApp::initialize(int stage) {
                         myMdType = mbTypes::LocalAttacker;
                     }
                 }
-            } else {
+            }
+            else {
                 if (myMdType == mbTypes::LocalAttacker) {
                     myMdType = mbTypes::Genuine;
                 }
@@ -252,24 +257,25 @@ void JosephVeinsApp::initialize(int stage) {
 
         if (params.randomConf) {
             double randConfPos = genLib.RandomDouble(
-                    params.confPos * params.minConf, params.confPos);
+                params.confPos * params.minConf, params.confPos);
             double randConfSpeed = genLib.RandomDouble(
-                    params.confSpd * params.minConf, params.confSpd);
+                params.confSpd * params.minConf, params.confSpd);
             double randConfHeading = genLib.RandomDouble(
-                    params.confHea * params.minConf, params.confHea);
+                params.confHea * params.minConf, params.confHea);
             double randConfAccel = genLib.RandomDouble(
-                    params.confAcc * params.minConf, params.confAcc);
+                params.confAcc * params.minConf, params.confAcc);
 
             if (params.variableConf) {
                 ConfPosMax = Coord(randConfPos * params.minConf, randConfPos * params.minConf,
-                        0);
+                    0);
                 ConfSpeedMax = Coord(randConfSpeed * params.minConf,
-                        randConfSpeed * params.minConf, 0);
+                    randConfSpeed * params.minConf, 0);
                 ConfHeadMax = Coord(randConfHeading * params.minConf,
-                        randConfHeading * params.minConf, 0);
+                    randConfHeading * params.minConf, 0);
                 ConfAccelMax = Coord(randConfAccel * params.minConf,
-                        randConfAccel * params.minConf, 0);
-            } else {
+                    randConfAccel * params.minConf, 0);
+            }
+            else {
                 ConfPosMax = Coord(0.0, 0.0, 0.0);
                 ConfSpeedMax = Coord(0.0, 0.0, 0.0);
                 ConfHeadMax = Coord(0.0, 0.0, 0.0);
@@ -278,22 +284,21 @@ void JosephVeinsApp::initialize(int stage) {
 
             randConfPos = ((int) (randConfPos * params.confPrec + .5) / params.confPrec);
             randConfSpeed = ((int) (randConfSpeed * params.confPrec + .5) / params.confPrec);
-            randConfHeading = ((int) (randConfHeading * params.confPrec + .5)
-                    / params.confPrec);
+            randConfHeading = ((int) (randConfHeading * params.confPrec + .5) / params.confPrec);
             randConfAccel = ((int) (randConfAccel * params.confPrec + .5) / params.confPrec);
 
             curPositionConfidenceOrig = Coord(randConfPos, randConfPos, 0);
             curSpeedConfidenceOrig = Coord(randConfSpeed, randConfSpeed, 0);
             curHeadingConfidenceOrig = Coord(randConfHeading, randConfHeading,
-                    0);
+                0);
             curAccelConfidenceOrig = Coord(randConfAccel, randConfAccel, 0);
 
             curPositionConfidence = Coord(randConfPos, randConfPos, 0);
             curSpeedConfidence = Coord(randConfSpeed, randConfSpeed, 0);
             curHeadingConfidence = Coord(randConfHeading, randConfHeading, 0);
             curAccelConfidence = Coord(randConfAccel, randConfAccel, 0);
-
-        } else if (params.veremiConf) {
+        }
+        else if (params.veremiConf) {
             double posE0 = genLib.RandomDouble(3, 5);
             double speedE0 = genLib.GaussianRandomDouble(0, 0.0016);
             double headingE0 = genLib.RandomDouble(0, 20);
@@ -309,13 +314,15 @@ void JosephVeinsApp::initialize(int stage) {
             curAccelConfidence = Coord(0, 0, 0);
 
             lastPositionUpdate = simTime().dbl() - 1.0;
-        } else {
+        }
+        else {
             if (params.variableConf) {
-                ConfPosMax = Coord(params.confPos * params.minConf, params.confPos *params. minConf, 0);
+                ConfPosMax = Coord(params.confPos * params.minConf, params.confPos * params.minConf, 0);
                 ConfSpeedMax = Coord(params.confSpd * params.minConf, params.confSpd * params.minConf, 0);
                 ConfHeadMax = Coord(params.confHea * params.minConf, params.confHea * params.minConf, 0);
                 ConfAccelMax = Coord(params.confAcc * params.minConf, params.confAcc * params.minConf, 0);
-            } else {
+            }
+            else {
                 ConfPosMax = Coord(0.0, 0.0, 0.0);
                 ConfSpeedMax = Coord(0.0, 0.0, 0.0);
                 ConfHeadMax = Coord(0.0, 0.0, 0.0);
@@ -344,8 +351,7 @@ void JosephVeinsApp::initialize(int stage) {
         case mbTypes::Genuine: {
             traciVehicle->setColor(TraCIColor(0, 255, 0, 255));
             myAttackType = attackTypes::Genuine;
-        }
-            break;
+        } break;
         case mbTypes::GlobalAttacker: {
             traciVehicle->setColor(TraCIColor(0, 255, 0, 255));
             myAttackType = params.GLOBAL_ATTACK_TYPE;
@@ -365,42 +371,44 @@ void JosephVeinsApp::initialize(int stage) {
 
             mdGlobalAttack.init(myAttackType);
 
-        }
-            break;
+        } break;
         case mbTypes::LocalAttacker: {
             //attack-------------------------------
             if (params.UseAttacksServer) {
                 myAttackType = localAttackServer.getNextAttack();
-            } else if (params.MixLocalAttacks) {
-                int AtLiSize = sizeof(params.MixLocalAttacksList)
-                        / sizeof(params.MixLocalAttacksList[0]);
+            }
+            else if (params.MixLocalAttacks) {
+                int AtLiSize = sizeof(params.MixLocalAttacksList) / sizeof(params.MixLocalAttacksList[0]);
                 int localAttackIndex = 0;
                 if (params.RandomLocalMix) {
                     localAttackIndex = genLib.RandomInt(0, AtLiSize - 1);
-                } else {
+                }
+                else {
                     if (LastLocalAttackIndex < (AtLiSize - 1)) {
                         localAttackIndex = LastLocalAttackIndex + 1;
                         LastLocalAttackIndex = localAttackIndex;
-                    } else {
+                    }
+                    else {
                         localAttackIndex = 0;
                         LastLocalAttackIndex = 0;
                     }
                 }
                 myAttackType = params.MixLocalAttacksList[localAttackIndex];
-            } else {
+            }
+            else {
                 myAttackType = params.LOCAL_ATTACK_TYPE;
             }
 
             std::cout
-                    << "=+#=+#=+#=+#=+#=+#=+#=+#+#=+#=+#=+#=+#=+#=+#=+#=+#=+#=+#=+#=+# "
-                    << "\n";
+                << "=+#=+#=+#=+#=+#=+#=+#=+#+#=+#=+#=+#=+#=+#=+#=+#=+#=+#=+#=+#=+# "
+                << "\n";
             std::cout
-                    << "=+#=+#=+#=+#=+#=+#=+#=+# NEW ATTACKER =+#=+#=+#=+#=+#=+#=+#=+# "
-                    << myPseudonym << " : "
-                    << attackTypes::AttackNames[myAttackType] << "\n";
+                << "=+#=+#=+#=+#=+#=+#=+#=+# NEW ATTACKER =+#=+#=+#=+#=+#=+#=+#=+# "
+                << myPseudonym << " : "
+                << attackTypes::AttackNames[myAttackType] << "\n";
             std::cout
-                    << "=+#=+#=+#=+#=+#=+#=+#=+#+#=+#=+#=+#=+#=+#=+#=+#=+#=+#=+#=+#=+# "
-                    << "\n";
+                << "=+#=+#=+#=+#=+#=+#=+#=+#+#=+#=+#=+#=+#=+#=+#=+#=+#=+#=+#=+#=+# "
+                << "\n";
 
             mdAttack = MDAttack();
 
@@ -426,8 +434,7 @@ void JosephVeinsApp::initialize(int stage) {
             //attack-------------------------------
             traciVehicle->setColor(TraCIColor(255, 0, 0, 255));
 
-        }
-            break;
+        } break;
         default:
             traciVehicle->setColor(TraCIColor(0, 0, 0, 0));
             break;
@@ -438,8 +445,8 @@ void JosephVeinsApp::initialize(int stage) {
             time_t t = time(NULL);
             struct tm tm = *localtime(&t);
             sprintf(dateBuffer, "%d-%d-%d_%d:%d:%d", tm.tm_year + 1900,
-                    tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min,
-                    tm.tm_sec);
+                tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min,
+                tm.tm_sec);
             std::string curDateTemp(dateBuffer);
             curDate = curDateTemp;
             setDate = true;
@@ -447,14 +454,16 @@ void JosephVeinsApp::initialize(int stage) {
 
         if (params.writeVeReMi) {
             VeReMi.initVeReMiPrintable(params.savePath, params.serialNumber, myId,
-                    getParentModule()->getId(), myAttackType, curDate,
-                    params.VeReMiSliceTime, VeReMiSliceStartTime, simTime().dbl());
+                getParentModule()->getId(), myAttackType, curDate,
+                params.VeReMiSliceTime, VeReMiSliceStartTime, simTime().dbl());
         }
-
     }
 }
 
-void JosephVeinsApp::finish() {
+void JosephVeinsApp::finish()
+{
+
+    realDynamicMap.erase(myId);
 
     if (myReportType == reportTypes::ProtocolReport) {
         handleReportProtocol(true);
@@ -466,7 +475,8 @@ void JosephVeinsApp::finish() {
 }
 
 void JosephVeinsApp::setMDApp(mdAppTypes::App appTypeV1,
-        mdAppTypes::App appTypeV2) {
+    mdAppTypes::App appTypeV2)
+{
     switch (appTypeV1) {
     case mdAppTypes::ThresholdApp:
         AppV1 = &ThreV1;
@@ -521,7 +531,8 @@ static double totalGenuine = 0;
 static double totalLocalAttacker = 0;
 static double totalGlobalAttacker = 0;
 mbTypes::Mbs JosephVeinsApp::induceMisbehavior(double localAttacker,
-        double globalAttacker) {
+    double globalAttacker)
+{
 
     if (simTime().dbl() < params.START_ATTACK) {
         return mbTypes::Genuine;
@@ -532,25 +543,26 @@ mbTypes::Mbs JosephVeinsApp::induceMisbehavior(double localAttacker,
         return mbTypes::Genuine;
     }
 
-    double realFactor = totalLocalAttacker
-            / (totalGenuine + totalLocalAttacker);
+    double realFactor = totalLocalAttacker / (totalGenuine + totalLocalAttacker);
     if (localAttacker > realFactor) {
         totalLocalAttacker++;
         return mbTypes::LocalAttacker;
-    } else {
-        double realGFactor = totalGlobalAttacker
-                / (totalGenuine + totalGlobalAttacker);
+    }
+    else {
+        double realGFactor = totalGlobalAttacker / (totalGenuine + totalGlobalAttacker);
         if (globalAttacker > realGFactor) {
             totalGlobalAttacker++;
             return mbTypes::GlobalAttacker;
-        } else {
+        }
+        else {
             totalGenuine++;
             return mbTypes::Genuine;
         }
     }
 }
 
-void JosephVeinsApp::onBSM(BasicSafetyMessage* bsm) {
+void JosephVeinsApp::onBSM(BasicSafetyMessage* bsm)
+{
 
     if (params.writeVeReMi) {
         VeReMi.serializeBeacon(bsm);
@@ -579,13 +591,14 @@ void JosephVeinsApp::onBSM(BasicSafetyMessage* bsm) {
             newMDM.initKalman(bsm, 2);
         }
         detectedNodes.put(senderPseudonym, newNode, newMDM,
-                &reportProtocolEnforcerV1, &reportProtocolEnforcerV2);
-    } else {
-        NodeHistory * existingNode = detectedNodes.getNodeHistoryAddr(
-                senderPseudonym);
+            &reportProtocolEnforcerV1, &reportProtocolEnforcerV2);
+    }
+    else {
+        NodeHistory* existingNode = detectedNodes.getNodeHistoryAddr(
+            senderPseudonym);
         existingNode->addBSM(*bsm);
-        MDMHistory * existingMDM = detectedNodes.getMDMHistoryAddr(
-                senderPseudonym);
+        MDMHistory* existingMDM = detectedNodes.getMDMHistoryAddr(
+            senderPseudonym);
         if (params.EnableV1) {
             existingMDM->addBsmCheck(bsmCheckV1, 1);
         }
@@ -595,10 +608,11 @@ void JosephVeinsApp::onBSM(BasicSafetyMessage* bsm) {
         //detectedNodes.put(senderPseudonym, *existingNode, *existingMDM);
     }
 
-//Your application has received a beacon message from another car or RSU
-//code for handling the message goes here
+    //Your application has received a beacon message from another car or RSU
+    //code for handling the message goes here
 }
-void JosephVeinsApp::treatAttackFlags() {
+void JosephVeinsApp::treatAttackFlags()
+{
 
     if (myMdType == mbTypes::LocalAttacker) {
         attackBsm = mdAttack.launchAttack(myAttackType, &linkControl);
@@ -609,14 +623,16 @@ void JosephVeinsApp::treatAttackFlags() {
 
         if (isAccusedNode(myPseudonym)) {
             traciVehicle->setColor(TraCIColor(0, 0, 0, 255));
-        } else {
+        }
+        else {
             traciVehicle->setColor(TraCIColor(255, 0, 0, 255));
         }
-
-    } else {
+    }
+    else {
         if (isTargetNode(myPseudonym)) {
             traciVehicle->setColor(TraCIColor(255, 255, 0, 255));
-        } else {
+        }
+        else {
             traciVehicle->setColor(TraCIColor(0, 255, 0, 255));
         }
         if (isAccusedNode(myPseudonym)) {
@@ -633,11 +649,11 @@ void JosephVeinsApp::treatAttackFlags() {
         accusedClearTime = simTime().dbl();
         clearAccusedNodes();
     }
-
 }
 
 void JosephVeinsApp::LocalMisbehaviorDetection(BasicSafetyMessage* bsm,
-        int version) {
+    int version)
+{
 
     unsigned long senderPseudo = bsm->getSenderPseudonym();
     bsm->getArrivalTime();
@@ -649,54 +665,53 @@ void JosephVeinsApp::LocalMisbehaviorDetection(BasicSafetyMessage* bsm,
 
         case mdChecksVersionTypes::LegacyChecks: {
             LegacyChecks mdm(version, myPseudonym, curPosition, curSpeed,
-                    curHeading, Coord(myWidth, myLength),
-                    Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
-                            MAX_PLAUSIBLE_DECEL), &linkControl, &params);
+                curHeading, Coord(myWidth, myLength),
+                Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
+                    MAX_PLAUSIBLE_DECEL),
+                &linkControl, &realDynamicMap, myId, &params);
             bsmCheckV1 = mdm.CheckBSM(bsm, &detectedNodes);
-        }
-            break;
+        } break;
         case mdChecksVersionTypes::CatchChecks: {
             CaTChChecks mdm(version, myPseudonym, curPosition,
-                    curPositionConfidence, curHeading, curHeadingConfidence,
-                    Coord(myWidth, myLength),
-                    Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
-                            MAX_PLAUSIBLE_DECEL), &linkControl, &params);
+                curPositionConfidence, curHeading, curHeadingConfidence,
+                Coord(myWidth, myLength),
+                Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
+                    MAX_PLAUSIBLE_DECEL),
+                &linkControl, &realDynamicMap, myId, &params);
             bsmCheckV1 = mdm.CheckBSM(bsm, &detectedNodes);
-        }
-            break;
+        } break;
         case mdChecksVersionTypes::ExperiChecks: {
             ExperiChecks mdm(version, myPseudonym, curPosition,
-                    curPositionConfidence, curHeading, curHeadingConfidence,
-                    Coord(myWidth, myLength),
-                    Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
-                            MAX_PLAUSIBLE_DECEL), &linkControl, &params);
+                curPositionConfidence, curHeading, curHeadingConfidence,
+                Coord(myWidth, myLength),
+                Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
+                    MAX_PLAUSIBLE_DECEL),
+                &linkControl, &realDynamicMap, myId, &params);
             bsmCheckV1 = mdm.CheckBSM(bsm, &detectedNodes);
-        }
-            break;
+        } break;
         default: {
             LegacyChecks mdm(version, myPseudonym, curPosition, curSpeed,
-                    curHeading, Coord(myWidth, myLength),
-                    Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
-                            MAX_PLAUSIBLE_DECEL), &linkControl, &params);
+                curHeading, Coord(myWidth, myLength),
+                Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
+                    MAX_PLAUSIBLE_DECEL),
+                &linkControl, &realDynamicMap, myId, &params);
             bsmCheckV1 = mdm.CheckBSM(bsm, &detectedNodes);
-        }
-            break;
+        } break;
         }
 
         bool result = false;
         auto startV1 = high_resolution_clock::now();
         result = AppV1->CheckNodeForReport(myPseudonym, bsm, &bsmCheckV1,
-                &detectedNodes);
+            &detectedNodes);
         auto endV1 = high_resolution_clock::now();
         auto duration = duration_cast<microseconds>(endV1 - startV1);
-        meanTimeV1 = ((double) numTimeV1 * meanTimeV1 + (duration.count()))
-                / ((double) numTimeV1 + 1.0);
+        meanTimeV1 = ((double) numTimeV1 * meanTimeV1 + (duration.count())) / ((double) numTimeV1 + 1.0);
         numTimeV1 = numTimeV1 + 1;
 
         if (params.enableVarThreV1) {
             varThrePrintableV1.registerMessage(
-                    mbTypes::intMbs[bsm->getSenderMbType()],
-                    AppV1->getMinFactor());
+                mbTypes::intMbs[bsm->getSenderMbType()],
+                AppV1->getMinFactor());
         }
 
         if (result && (myMdType == mbTypes::Genuine)) {
@@ -710,9 +725,9 @@ void JosephVeinsApp::LocalMisbehaviorDetection(BasicSafetyMessage* bsm,
 
             reportBase.setMbType(mbTypes::mbNames[bsm->getSenderMbType()]);
             reportBase.setAttackType(
-                    attackTypes::AttackNames[bsm->getSenderAttackType()]);
+                attackTypes::AttackNames[bsm->getSenderAttackType()]);
             std::pair<double, double> currLonLat = traci->getLonLat(
-                    curPosition);
+                curPosition);
             reportBase.setSenderGps(Coord(currLonLat.first, currLonLat.second));
             reportBase.setReportedGps(bsm->getSenderGpsCoordinates());
 
@@ -729,9 +744,10 @@ void JosephVeinsApp::LocalMisbehaviorDetection(BasicSafetyMessage* bsm,
             if (params.sendReportsV1 && myBsmNum > 0) {
                 sendReport(reportBase, version, mdv, bsmCheckV1, bsm);
             }
-        } else if (myMdType == mbTypes::GlobalAttacker) {
+        }
+        else if (myMdType == mbTypes::GlobalAttacker) {
             MDReport reportBase = mdGlobalAttack.launchAttack(myAttackType,
-                    bsm);
+                bsm);
 
             if (params.writeReportsV1) {
                 writeReport(reportBase, version, mdv, bsmCheckV1, bsm);
@@ -764,8 +780,9 @@ void JosephVeinsApp::LocalMisbehaviorDetection(BasicSafetyMessage* bsm,
             if ((simTime().dbl() - deltaTVS1) > params.PRINT_PERIOD) {
                 deltaTVS1 = simTime().dbl();
                 printOut = true;
-                std::cout << "-_-_-_-_-_-_-_-_-_-_-_-_-" << " meanTimeV1:"
-                        << meanTimeV1 << " μs " << numTimeV1 << "\n";
+                std::cout << "-_-_-_-_-_-_-_-_-_-_-_-_-"
+                          << " meanTimeV1:"
+                          << meanTimeV1 << " μs " << numTimeV1 << "\n";
             }
 
             deltaTV1 = simTime().dbl();
@@ -773,15 +790,14 @@ void JosephVeinsApp::LocalMisbehaviorDetection(BasicSafetyMessage* bsm,
             if ((simTime().dbl() > params.START_SAVE) && params.SaveStatsV1) {
 
                 AppV1->saveLine(params.savePath, params.serialNumber,
-                        mobility->getManager()->getManagedHosts().size(),
-                        deltaTV1, printOut);
+                    mobility->getManager()->getManagedHosts().size(),
+                    deltaTV1, printOut);
 
                 mdStats.saveLine(params.savePath, params.serialNumber, deltaTV1, printOut);
                 if (params.enableVarThreV1) {
                     varThrePrintableV1.saveFile(params.savePath, params.serialNumber,
-                            printOut);
+                        printOut);
                 }
-
             }
             AppV1->resetInstFlags();
         }
@@ -799,54 +815,53 @@ void JosephVeinsApp::LocalMisbehaviorDetection(BasicSafetyMessage* bsm,
         switch (params.checksVersionV2) {
         case mdChecksVersionTypes::LegacyChecks: {
             LegacyChecks mdm(version, myPseudonym, curPosition, curSpeed,
-                    curHeading, Coord(myWidth, myLength),
-                    Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
-                            MAX_PLAUSIBLE_DECEL), &linkControl, &params);
+                curHeading, Coord(myWidth, myLength),
+                Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
+                    MAX_PLAUSIBLE_DECEL),
+                &linkControl, &realDynamicMap, myId, &params);
             bsmCheckV2 = mdm.CheckBSM(bsm, &detectedNodes);
-        }
-            break;
+        } break;
         case mdChecksVersionTypes::CatchChecks: {
             CaTChChecks mdm(version, myPseudonym, curPosition,
-                    curPositionConfidence, curHeading, curHeadingConfidence,
-                    Coord(myWidth, myLength),
-                    Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
-                            MAX_PLAUSIBLE_DECEL), &linkControl, &params);
+                curPositionConfidence, curHeading, curHeadingConfidence,
+                Coord(myWidth, myLength),
+                Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
+                    MAX_PLAUSIBLE_DECEL),
+                &linkControl, &realDynamicMap, myId, &params);
             bsmCheckV2 = mdm.CheckBSM(bsm, &detectedNodes);
-        }
-            break;
+        } break;
         case mdChecksVersionTypes::ExperiChecks: {
             ExperiChecks mdm(version, myPseudonym, curPosition,
-                    curPositionConfidence, curHeading, curHeadingConfidence,
-                    Coord(myWidth, myLength),
-                    Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
-                            MAX_PLAUSIBLE_DECEL), &linkControl, &params);
+                curPositionConfidence, curHeading, curHeadingConfidence,
+                Coord(myWidth, myLength),
+                Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
+                    MAX_PLAUSIBLE_DECEL),
+                &linkControl, &realDynamicMap, myId, &params);
             bsmCheckV2 = mdm.CheckBSM(bsm, &detectedNodes);
-        }
-            break;
+        } break;
         default: {
             LegacyChecks mdm(version, myPseudonym, curPosition, curSpeed,
-                    curHeading, Coord(myWidth, myLength),
-                    Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
-                            MAX_PLAUSIBLE_DECEL), &linkControl, &params);
+                curHeading, Coord(myWidth, myLength),
+                Coord(MAX_PLAUSIBLE_SPEED, MAX_PLAUSIBLE_ACCEL,
+                    MAX_PLAUSIBLE_DECEL),
+                &linkControl, &realDynamicMap, myId, &params);
             bsmCheckV2 = mdm.CheckBSM(bsm, &detectedNodes);
-        }
-            break;
+        } break;
         }
 
         bool result = false;
         auto startV2 = high_resolution_clock::now();
         result = AppV2->CheckNodeForReport(myPseudonym, bsm, &bsmCheckV2,
-                &detectedNodes);
+            &detectedNodes);
         auto endV2 = high_resolution_clock::now();
         auto duration = duration_cast<microseconds>(endV2 - startV2);
-        meanTimeV2 = ((double) numTimeV2 * meanTimeV2 + (duration.count()))
-                / ((double) numTimeV2 + 1.0);
+        meanTimeV2 = ((double) numTimeV2 * meanTimeV2 + (duration.count())) / ((double) numTimeV2 + 1.0);
         numTimeV2 = numTimeV2 + 1;
 
         if (params.enableVarThreV2) {
             varThrePrintableV2.registerMessage(
-                    mbTypes::intMbs[bsm->getSenderMbType()],
-                    AppV2->getMinFactor());
+                mbTypes::intMbs[bsm->getSenderMbType()],
+                AppV2->getMinFactor());
         }
 
         if (result && (myMdType == mbTypes::Genuine)) {
@@ -860,9 +875,9 @@ void JosephVeinsApp::LocalMisbehaviorDetection(BasicSafetyMessage* bsm,
 
             reportBase.setMbType(mbTypes::mbNames[bsm->getSenderMbType()]);
             reportBase.setAttackType(
-                    attackTypes::AttackNames[bsm->getSenderAttackType()]);
+                attackTypes::AttackNames[bsm->getSenderAttackType()]);
             std::pair<double, double> currLonLat = traci->getLonLat(
-                    curPosition);
+                curPosition);
             reportBase.setSenderGps(Coord(currLonLat.first, currLonLat.second));
             reportBase.setReportedGps(bsm->getSenderGpsCoordinates());
 
@@ -880,10 +895,10 @@ void JosephVeinsApp::LocalMisbehaviorDetection(BasicSafetyMessage* bsm,
             if (params.sendReportsV2 && myBsmNum > 0) {
                 sendReport(reportBase, version, mdv, bsmCheckV2, bsm);
             }
-
-        } else if (myMdType == mbTypes::GlobalAttacker) {
+        }
+        else if (myMdType == mbTypes::GlobalAttacker) {
             MDReport reportBase = mdGlobalAttack.launchAttack(myAttackType,
-                    bsm);
+                bsm);
 
             if (params.writeReportsV2) {
                 writeReport(reportBase, version, mdv, bsmCheckV2, bsm);
@@ -896,7 +911,6 @@ void JosephVeinsApp::LocalMisbehaviorDetection(BasicSafetyMessage* bsm,
             if (params.sendReportsV2) {
                 sendReport(reportBase, version, mdv, bsmCheckV2, bsm);
             }
-
         }
 
         if (params.writeBsmsV2) {
@@ -918,23 +932,23 @@ void JosephVeinsApp::LocalMisbehaviorDetection(BasicSafetyMessage* bsm,
             if ((simTime().dbl() - deltaTVS2) > params.PRINT_PERIOD) {
                 deltaTVS2 = simTime().dbl();
                 printOut = true;
-                std::cout << "-_-_-_-_-_-_-_-_-_-_-_-_-" << " meanTimeV2:"
-                        << meanTimeV2 << " μs " << numTimeV2 << "\n";
+                std::cout << "-_-_-_-_-_-_-_-_-_-_-_-_-"
+                          << " meanTimeV2:"
+                          << meanTimeV2 << " μs " << numTimeV2 << "\n";
             }
 
             deltaTV2 = simTime().dbl();
 
             if ((simTime().dbl() > params.START_SAVE) && params.SaveStatsV2) {
                 AppV2->saveLine(params.savePath, params.serialNumber,
-                        mobility->getManager()->getManagedHosts().size(),
-                        deltaTV2, printOut);
+                    mobility->getManager()->getManagedHosts().size(),
+                    deltaTV2, printOut);
 
                 mdStats.saveLine(params.savePath, params.serialNumber, deltaTV2, printOut);
                 if (params.enableVarThreV2) {
                     varThrePrintableV2.saveFile(params.savePath, params.serialNumber,
-                            printOut);
+                        printOut);
                 }
-
             }
             AppV2->resetInstFlags();
         }
@@ -949,136 +963,128 @@ void JosephVeinsApp::LocalMisbehaviorDetection(BasicSafetyMessage* bsm,
     default:
         break;
     }
-
 }
 
 void JosephVeinsApp::writeReport(MDReport reportBase, int version,
-        std::string maversion, BsmCheck bsmCheck, BasicSafetyMessage *bsm) {
+    std::string maversion, BsmCheck bsmCheck, BasicSafetyMessage* bsm)
+{
     switch (myReportType) {
     case reportTypes::BasicCheckReport: {
         BasicCheckReport bcr = BasicCheckReport(reportBase);
         bcr.setReportedCheck(bsmCheck);
         bcr.writeStrToFile(params.savePath, params.serialNumber, maversion,
-                bcr.getReportPrintableJson(), curDate);
-    }
-        break;
+            bcr.getReportPrintableJson(), curDate);
+    } break;
 
     case reportTypes::OneMessageReport: {
         OneMessageReport omr = OneMessageReport(reportBase);
         omr.setReportedBsm(*bsm);
         omr.setReportedCheck(bsmCheck);
         omr.writeStrToFile(params.savePath, params.serialNumber, maversion,
-                omr.getReportPrintableJson(), curDate);
-    }
-        break;
+            omr.getReportPrintableJson(), curDate);
+    } break;
     case reportTypes::EvidenceReport: {
         EvidenceReport evr = EvidenceReport(reportBase);
         if (myBsmNum > 0) {
             evr.addEvidence(myBsm[0], bsmCheck, *bsm, &detectedNodes);
             evr.writeStrToFile(params.savePath, params.serialNumber, maversion,
-                    evr.getReportPrintableJson(), curDate);
-        } else {
+                evr.getReportPrintableJson(), curDate);
+        }
+        else {
             OneMessageReport omr = OneMessageReport(reportBase);
             omr.setReportedBsm(*bsm);
             omr.setReportedCheck(bsmCheck);
             omr.writeStrToFile(params.savePath, params.serialNumber, maversion,
-                    omr.getReportPrintableJson(), curDate);
+                omr.getReportPrintableJson(), curDate);
         }
-    }
-        break;
+    } break;
     case reportTypes::ProtocolReport: {
         bool newNode = false;
         switch (version) {
         case 1: {
             newNode = reportProtocolEnforcerV1.addMisbehavingPseudo(
-                    bsm->getSenderPseudonym(), simTime().dbl());
-        }
-            break;
+                bsm->getSenderPseudonym(), simTime().dbl());
+        } break;
         case 2: {
             newNode = reportProtocolEnforcerV2.addMisbehavingPseudo(
-                    bsm->getSenderPseudonym(), simTime().dbl());
-        }
-            break;
+                bsm->getSenderPseudonym(), simTime().dbl());
+        } break;
         }
         if (newNode) {
             ProtocolReport hir = ProtocolReport(reportBase);
             hir.addEvidence(myBsm[0], bsmCheck, *bsm, &detectedNodes,
-                    simTime().dbl(), params.InitialHistory, version);
+                simTime().dbl(), params.InitialHistory, version);
             hir.writeStrToFile(params.savePath, params.serialNumber, maversion,
-                    hir.getReportPrintableJson(), curDate);
+                hir.getReportPrintableJson(), curDate);
         }
-    }
-        break;
+    } break;
     default:
         break;
     }
 }
 
 void JosephVeinsApp::writeListReport(MDReport reportBase, int version,
-        std::string maversion, BsmCheck bsmCheck, BasicSafetyMessage *bsm) {
+    std::string maversion, BsmCheck bsmCheck, BasicSafetyMessage* bsm)
+{
 
     switch (myReportType) {
     case reportTypes::BasicCheckReport: {
         BasicCheckReport bcr = BasicCheckReport(reportBase);
         bcr.setReportedCheck(bsmCheck);
         bcr.writeStrToFileList(params.savePath, params.serialNumber, maversion,
-                bcr.getReportPrintableJson(), curDate);
-    }
-        break;
+            bcr.getReportPrintableJson(), curDate);
+    } break;
 
     case reportTypes::OneMessageReport: {
         OneMessageReport omr = OneMessageReport(reportBase);
         omr.setReportedBsm(*bsm);
         omr.setReportedCheck(bsmCheck);
         omr.writeStrToFileList(params.savePath, params.serialNumber, maversion,
-                omr.getReportPrintableJson(), curDate);
-    }
-        break;
+            omr.getReportPrintableJson(), curDate);
+    } break;
     case reportTypes::EvidenceReport: {
         EvidenceReport evr = EvidenceReport(reportBase);
         if (myBsmNum > 0) {
             evr.addEvidence(myBsm[0], bsmCheck, *bsm, &detectedNodes);
             evr.writeStrToFileList(params.savePath, params.serialNumber, maversion,
-                    evr.getReportPrintableJson(), curDate);
-        } else {
+                evr.getReportPrintableJson(), curDate);
+        }
+        else {
             OneMessageReport omr = OneMessageReport(reportBase);
             omr.setReportedBsm(*bsm);
             omr.setReportedCheck(bsmCheck);
             omr.writeStrToFileList(params.savePath, params.serialNumber, maversion,
-                    omr.getReportPrintableJson(), curDate);
+                omr.getReportPrintableJson(), curDate);
         }
-    }
-        break;
+    } break;
     case reportTypes::ProtocolReport: {
         bool newNode = false;
         switch (version) {
         case 1: {
             newNode = reportProtocolEnforcerV1.addMisbehavingPseudo(
-                    bsm->getSenderPseudonym(), simTime().dbl());
-        }
-            break;
+                bsm->getSenderPseudonym(), simTime().dbl());
+        } break;
         case 2:
             newNode = reportProtocolEnforcerV2.addMisbehavingPseudo(
-                    bsm->getSenderPseudonym(), simTime().dbl());
+                bsm->getSenderPseudonym(), simTime().dbl());
             break;
         }
         if (newNode) {
             ProtocolReport hir = ProtocolReport(reportBase);
             hir.addEvidence(myBsm[0], bsmCheck, *bsm, &detectedNodes,
-                    simTime().dbl(), params.InitialHistory, version);
+                simTime().dbl(), params.InitialHistory, version);
             hir.writeStrToFileList(params.savePath, params.serialNumber, maversion,
-                    hir.getReportPrintableJson(), curDate);
+                hir.getReportPrintableJson(), curDate);
         }
-    }
-        break;
+    } break;
     default:
         break;
     }
-
 }
 
 void JosephVeinsApp::sendReport(MDReport reportBase, int version,
-        std::string maversion, BsmCheck bsmCheck, BasicSafetyMessage *bsm) {
+    std::string maversion, BsmCheck bsmCheck, BasicSafetyMessage* bsm)
+{
 
     std::string reportStr = "";
 
@@ -1087,57 +1093,53 @@ void JosephVeinsApp::sendReport(MDReport reportBase, int version,
         BasicCheckReport bcr = BasicCheckReport(reportBase);
         bcr.setReportedCheck(bsmCheck);
         reportStr = bcr.getReportPrintableJson();
-    }
-        break;
+    } break;
 
     case reportTypes::OneMessageReport: {
         OneMessageReport omr = OneMessageReport(reportBase);
         omr.setReportedBsm(*bsm);
         omr.setReportedCheck(bsmCheck);
         reportStr = omr.getReportPrintableJson();
-    }
-        break;
+    } break;
     case reportTypes::EvidenceReport: {
         EvidenceReport evr = EvidenceReport(reportBase);
         if (myBsmNum > 0) {
             evr.addEvidence(myBsm[0], bsmCheck, *bsm, &detectedNodes);
             reportStr = evr.getReportPrintableJson();
-        } else {
+        }
+        else {
             OneMessageReport omr = OneMessageReport(reportBase);
             omr.setReportedBsm(*bsm);
             omr.setReportedCheck(bsmCheck);
             reportStr = omr.getReportPrintableJson();
         }
-    }
-        break;
+    } break;
     case reportTypes::ProtocolReport: {
         bool newNode = false;
         switch (version) {
         case 1: {
 
             newNode = reportProtocolEnforcerV1.addMisbehavingPseudo(
-                    bsm->getSenderPseudonym(), simTime().dbl());
-        }
-            break;
+                bsm->getSenderPseudonym(), simTime().dbl());
+        } break;
         case 2:
 
             newNode = reportProtocolEnforcerV2.addMisbehavingPseudo(
-                    bsm->getSenderPseudonym(), simTime().dbl());
+                bsm->getSenderPseudonym(), simTime().dbl());
             break;
         }
 
         if (newNode) {
             ProtocolReport hir = ProtocolReport(reportBase);
             hir.addEvidence(myBsm[0], bsmCheck, *bsm, &detectedNodes,
-                    simTime().dbl(), params.InitialHistory, version);
+                simTime().dbl(), params.InitialHistory, version);
             reportStr = hir.getReportPrintableJson();
-
-        } else {
+        }
+        else {
             //do not report now
             return;
         }
-    }
-        break;
+    } break;
     default:
         reportStr = "ERROR myReportType";
         break;
@@ -1155,62 +1157,66 @@ void JosephVeinsApp::sendReport(MDReport reportBase, int version,
         HTTPRequest httpr = HTTPRequest(params.maPortV2, params.maHostV2);
         std::string response = httpr.Request(reportStr);
     }
-
 }
 
 void JosephVeinsApp::writeMdBsm(std::string version, BsmCheck bsmCheck,
-        BasicSafetyMessage *bsm) {
+    BasicSafetyMessage* bsm)
+{
     BsmPrintable bsmPrint = BsmPrintable();
     bsmPrint.setReceiverId(myId);
     bsmPrint.setReceiverPseudo(myPseudonym);
     bsmPrint.setBsm(*bsm);
     bsmPrint.setBsmCheck(bsmCheck);
     bsmPrint.writeStrToFile(params.savePath, params.serialNumber, version,
-            bsmPrint.getBsmPrintableJson(), curDate);
+        bsmPrint.getBsmPrintableJson(), curDate);
 }
 
 void JosephVeinsApp::writeMdListBsm(std::string version, BsmCheck bsmCheck,
-        BasicSafetyMessage *bsm) {
+    BasicSafetyMessage* bsm)
+{
     BsmPrintable bsmPrint = BsmPrintable();
     bsmPrint.setReceiverId(myId);
     bsmPrint.setReceiverPseudo(myPseudonym);
     bsmPrint.setBsm(*bsm);
     bsmPrint.setBsmCheck(bsmCheck);
     bsmPrint.writeStrToFileList(params.savePath, params.serialNumber, version,
-            bsmPrint.getBsmPrintableJson(), curDate);
+        bsmPrint.getBsmPrintableJson(), curDate);
 }
 
-void JosephVeinsApp::writeSelfBsm(BasicSafetyMessage bsm) {
+void JosephVeinsApp::writeSelfBsm(BasicSafetyMessage bsm)
+{
     BsmPrintable bsmPrint = BsmPrintable();
     bsmPrint.setReceiverId(myId);
     bsmPrint.setReceiverPseudo(myPseudonym);
     bsmPrint.setBsm(bsm);
     bsmPrint.writeSelfStrToFile(params.savePath, params.serialNumber,
-            bsmPrint.getSelfBsmPrintableJson(myVType), curDate);
+        bsmPrint.getSelfBsmPrintableJson(myVType), curDate);
 }
 
-void JosephVeinsApp::writeSelfListBsm(BasicSafetyMessage bsm) {
+void JosephVeinsApp::writeSelfListBsm(BasicSafetyMessage bsm)
+{
     BsmPrintable bsmPrint = BsmPrintable();
     bsmPrint.setReceiverId(myId);
     bsmPrint.setReceiverPseudo(myPseudonym);
     bsmPrint.setBsm(bsm);
     bsmPrint.writeSelfStrToFileList(params.savePath, params.serialNumber,
-            bsmPrint.getSelfBsmPrintableJson(myVType), curDate);
+        bsmPrint.getSelfBsmPrintableJson(myVType), curDate);
 }
 
-void JosephVeinsApp::onWSM(BaseFrame1609_4* wsm) {
-//Your application has received a data message from another car or RSU
-//code for handling the message goes here, see TraciDemo11p.cc for examples
-
+void JosephVeinsApp::onWSM(BaseFrame1609_4* wsm)
+{
+    //Your application has received a data message from another car or RSU
+    //code for handling the message goes here, see TraciDemo11p.cc for examples
 }
 
-void JosephVeinsApp::onWSA(DemoServiceAdvertisment* wsa) {
-//Your application has received a service advertisement from another car or RSU
-//code for handling the message goes here, see TraciDemo11p.cc for examples
-
+void JosephVeinsApp::onWSA(DemoServiceAdvertisment* wsa)
+{
+    //Your application has received a service advertisement from another car or RSU
+    //code for handling the message goes here, see TraciDemo11p.cc for examples
 }
 
-void JosephVeinsApp::handleSelfMsg(cMessage* msg) {
+void JosephVeinsApp::handleSelfMsg(cMessage* msg)
+{
 
     treatAttackFlags();
 
@@ -1245,31 +1251,33 @@ void JosephVeinsApp::handleSelfMsg(cMessage* msg) {
         pcPolicy.checkPseudonymChange(myPcType);
     }
 
-//this method is for self messages (mostly timers)
-//it is important to call the F2MDBaseApplLayer function for BSM and WSM transmission
-
+    //this method is for self messages (mostly timers)
+    //it is important to call the F2MDBaseApplLayer function for BSM and WSM transmission
 }
 
-void JosephVeinsApp::handleReportProtocol(bool lastTimeStep) {
+void JosephVeinsApp::handleReportProtocol(bool lastTimeStep)
+{
 
     unsigned long pseudosList[MAX_REP_PSEUDOS];
     if (params.EnableV1) {
         int pseudoNum = 0;
         if (lastTimeStep) {
             pseudoNum = reportProtocolEnforcerV1.getAllReportPseudoes(
-                    simTime().dbl(), pseudosList);
-        } else {
+                simTime().dbl(), pseudosList);
+        }
+        else {
             pseudoNum = reportProtocolEnforcerV1.getReportPseudoes(
-                    simTime().dbl(), pseudosList);
+                simTime().dbl(), pseudosList);
         }
 
         for (int var = 0; var < pseudoNum; ++var) {
             if (!detectedNodes.includes(pseudosList[var])) {
-                BasicSafetyMessage * reportedBsm =
-                        detectedNodes.getNodeHistoryAddr(pseudosList[var])->getLatestBSMAddr();
+                BasicSafetyMessage* reportedBsm =
+                    detectedNodes.getNodeHistoryAddr(pseudosList[var])->getLatestBSMAddr();
 
-                BsmCheck * reportedCheck = detectedNodes.getMDMHistoryAddr(
-                        pseudosList[var])->getLatestBsmCheckAddr(1);
+                BsmCheck* reportedCheck = detectedNodes.getMDMHistoryAddr(
+                                                           pseudosList[var])
+                                              ->getLatestBsmCheckAddr(1);
 
                 MDReport reportBase;
                 reportBase.setGenerationTime(simTime().dbl());
@@ -1280,41 +1288,41 @@ void JosephVeinsApp::handleReportProtocol(bool lastTimeStep) {
                 reportBase.setReportedRealId(reportedBsm->getSenderRealId());
 
                 reportBase.setMbType(
-                        mbTypes::mbNames[reportedBsm->getSenderMbType()]);
+                    mbTypes::mbNames[reportedBsm->getSenderMbType()]);
                 reportBase.setAttackType(
-                        attackTypes::AttackNames[reportedBsm->getSenderAttackType()]);
+                    attackTypes::AttackNames[reportedBsm->getSenderAttackType()]);
                 std::pair<double, double> currLonLat = traci->getLonLat(
-                        curPosition);
+                    curPosition);
                 reportBase.setSenderGps(
-                        Coord(currLonLat.first, currLonLat.second));
+                    Coord(currLonLat.first, currLonLat.second));
                 reportBase.setReportedGps(
-                        reportedBsm->getSenderGpsCoordinates());
+                    reportedBsm->getSenderGpsCoordinates());
 
                 ProtocolReport hir = ProtocolReport(reportBase);
                 hir.addEvidence(myBsm[0], *reportedCheck, *reportedBsm,
-                        &detectedNodes, simTime().dbl(),
-                        params.CollectionPeriod, 1);
+                    &detectedNodes, simTime().dbl(),
+                    params.CollectionPeriod, 1);
 
                 if (params.writeReportsV1 && myBsmNum > 0) {
                     hir.writeStrToFile(params.savePath, params.serialNumber, "V1",
-                            hir.getReportPrintableJson(), curDate);
+                        hir.getReportPrintableJson(), curDate);
                 }
 
                 if (params.writeListReportsV1 && myBsmNum > 0) {
                     hir.writeStrToFileList(params.savePath, params.serialNumber, "V1",
-                            hir.getReportPrintableJson(), curDate);
+                        hir.getReportPrintableJson(), curDate);
                 }
 
                 if (params.sendReportsV1 && myBsmNum > 0) {
                     HTTPRequest httpr = HTTPRequest(params.maPortV1, params.maHostV1);
                     std::string response = httpr.Request(
-                            hir.getReportPrintableJson());
+                        hir.getReportPrintableJson());
                 }
-            } else {
+            }
+            else {
                 reportProtocolEnforcerV1.removeReportedPseudo(pseudosList[var]);
             }
         }
-
     }
 
     if (params.EnableV2) {
@@ -1322,18 +1330,20 @@ void JosephVeinsApp::handleReportProtocol(bool lastTimeStep) {
         int pseudoNum = 0;
         if (lastTimeStep) {
             pseudoNum = reportProtocolEnforcerV2.getAllReportPseudoes(
-                    simTime().dbl(), pseudosList);
-        } else {
+                simTime().dbl(), pseudosList);
+        }
+        else {
             pseudoNum = reportProtocolEnforcerV2.getReportPseudoes(
-                    simTime().dbl(), pseudosList);
+                simTime().dbl(), pseudosList);
         }
 
         for (int var = 0; var < pseudoNum; ++var) {
             if (detectedNodes.includes(pseudosList[var])) {
-                BasicSafetyMessage * reportedBsm =
-                        detectedNodes.getNodeHistoryAddr(pseudosList[var])->getLatestBSMAddr();
-                BsmCheck * reportedCheck = detectedNodes.getMDMHistoryAddr(
-                        pseudosList[var])->getLatestBsmCheckAddr(2);
+                BasicSafetyMessage* reportedBsm =
+                    detectedNodes.getNodeHistoryAddr(pseudosList[var])->getLatestBSMAddr();
+                BsmCheck* reportedCheck = detectedNodes.getMDMHistoryAddr(
+                                                           pseudosList[var])
+                                              ->getLatestBsmCheckAddr(2);
                 if (reportedBsm->getSenderPseudonym() == 0) {
                     std::cout << pseudosList[var] << "\n";
                     std::cout << "Problem Found \n";
@@ -1349,140 +1359,137 @@ void JosephVeinsApp::handleReportProtocol(bool lastTimeStep) {
                 reportBase.setReportedRealId(reportedBsm->getSenderRealId());
 
                 reportBase.setMbType(
-                        mbTypes::mbNames[reportedBsm->getSenderMbType()]);
+                    mbTypes::mbNames[reportedBsm->getSenderMbType()]);
                 reportBase.setAttackType(
-                        attackTypes::AttackNames[reportedBsm->getSenderAttackType()]);
+                    attackTypes::AttackNames[reportedBsm->getSenderAttackType()]);
                 std::pair<double, double> currLonLat = traci->getLonLat(
-                        curPosition);
+                    curPosition);
                 reportBase.setSenderGps(
-                        Coord(currLonLat.first, currLonLat.second));
+                    Coord(currLonLat.first, currLonLat.second));
                 reportBase.setReportedGps(
-                        reportedBsm->getSenderGpsCoordinates());
+                    reportedBsm->getSenderGpsCoordinates());
 
                 ProtocolReport hir = ProtocolReport(reportBase);
 
                 hir.addEvidence(myBsm[0], *reportedCheck, *reportedBsm,
-                        &detectedNodes, simTime().dbl(),
-                        params.CollectionPeriod, 2);
+                    &detectedNodes, simTime().dbl(),
+                    params.CollectionPeriod, 2);
 
                 if (params.writeReportsV2 && myBsmNum > 0) {
                     hir.writeStrToFile(params.savePath, params.serialNumber, "V2",
-                            hir.getReportPrintableJson(), curDate);
+                        hir.getReportPrintableJson(), curDate);
                 }
 
                 if (params.writeListReportsV2 && myBsmNum > 0) {
                     hir.writeStrToFileList(params.savePath, params.serialNumber, "V2",
-                            hir.getReportPrintableJson(), curDate);
+                        hir.getReportPrintableJson(), curDate);
                 }
 
                 if (params.sendReportsV2 && myBsmNum > 0) {
                     HTTPRequest httpr = HTTPRequest(params.maPortV2, params.maHostV2);
                     std::string response = httpr.Request(
-                            hir.getReportPrintableJson());
+                        hir.getReportPrintableJson());
                 }
-            } else {
+            }
+            else {
                 reportProtocolEnforcerV2.removeReportedPseudo(pseudosList[var]);
             }
         }
-
     }
-
 }
-void JosephVeinsApp::handlePositionUpdate(cObject* obj) {
+void JosephVeinsApp::handlePositionUpdate(cObject* obj)
+{
     F2MDBaseApplLayer::handlePositionUpdate(obj);
 
-    ChannelMobilityPtrType const mobility = check_and_cast<
-            ChannelMobilityPtrType>(obj);
+    realDynamicMap[myId] = mobility->getPositionAt(simTime());
 
+    ChannelMobilityPtrType const mobility = check_and_cast<
+        ChannelMobilityPtrType>(obj);
 
     RelativeOffsetConf relativeOffsetConfidence = RelativeOffsetConf(
-            &ConfPosMax, &ConfSpeedMax, &ConfHeadMax, &ConfAccelMax,
-            &deltaConfPos, &deltaConfSpeed, &deltaConfHead, &deltaConfAccel);
+        &ConfPosMax, &ConfSpeedMax, &ConfHeadMax, &ConfAccelMax,
+        &deltaConfPos, &deltaConfSpeed, &deltaConfHead, &deltaConfAccel);
 
     if (params.veremiConf) {
         double posEtx = genLib.GaussianRandomDouble(
-                (curPositionConfidence.x + curPositionConfidenceOrig.x) / 2,
-                0.03 * curPositionConfidenceOrig.x);
+            (curPositionConfidence.x + curPositionConfidenceOrig.x) / 2,
+            0.03 * curPositionConfidenceOrig.x);
         double posEty = genLib.GaussianRandomDouble(
-                (curPositionConfidence.y + curPositionConfidenceOrig.y) / 2,
-                0.03 * curPositionConfidenceOrig.y);
+            (curPositionConfidence.y + curPositionConfidenceOrig.y) / 2,
+            0.03 * curPositionConfidenceOrig.y);
 
         curPositionConfidence = Coord(posEtx, posEty, 0);
 
         curHeadingConfidence = Coord(
-                curHeadingConfidenceOrig.x
-                        * exp(-0.1 * mobility->getCurrentSpeed().x),
-                curHeadingConfidenceOrig.y
-                        * exp(-0.1 * mobility->getCurrentSpeed().y), 0);
+            curHeadingConfidenceOrig.x * exp(-0.1 * mobility->getCurrentSpeed().x),
+            curHeadingConfidenceOrig.y * exp(-0.1 * mobility->getCurrentSpeed().y), 0);
 
         Coord oldSpeedConfidence = Coord(curSpeedConfidence.x,
-                curSpeedConfidence.y, curSpeedConfidence.z);
+            curSpeedConfidence.y, curSpeedConfidence.z);
         curSpeedConfidence = Coord(curSpeed.x * curSpeedConfidenceOrig.x,
-                curSpeed.y * curSpeedConfidenceOrig.y, 0);
+            curSpeed.y * curSpeedConfidenceOrig.y, 0);
 
         curAccelConfidence = Coord(
-                fabs((curSpeedConfidence.x - oldSpeedConfidence.x))
-                        / (simTime().dbl() - lastPositionUpdate),
-                fabs((curSpeedConfidence.y - oldSpeedConfidence.y))
-                        / (simTime().dbl() - lastPositionUpdate),
-                fabs((curSpeedConfidence.z - oldSpeedConfidence.z))
-                        / (simTime().dbl() - lastPositionUpdate));
+            fabs((curSpeedConfidence.x - oldSpeedConfidence.x)) / (simTime().dbl() - lastPositionUpdate),
+            fabs((curSpeedConfidence.y - oldSpeedConfidence.y)) / (simTime().dbl() - lastPositionUpdate),
+            fabs((curSpeedConfidence.z - oldSpeedConfidence.z)) / (simTime().dbl() - lastPositionUpdate));
 
         lastPositionUpdate = simTime().dbl();
 
         //curHeadingConfidence = Coord(0, 0, 0);
 
         RelativeOffset relativeOffset = RelativeOffset(&curPositionConfidence,
-                &curSpeedConfidence, &curHeadingConfidence, &curAccelConfidence,
-                &deltaRPosition, &deltaThetaPosition, &deltaSpeed,
-                &deltaHeading, &deltaAccel);
+            &curSpeedConfidence, &curHeadingConfidence, &curAccelConfidence,
+            &deltaRPosition, &deltaThetaPosition, &deltaSpeed,
+            &deltaHeading, &deltaAccel);
 
         curPosition = relativeOffset.OffsetPosition(
-                mobility->getPositionAt(simTime()));
+            mobility->getPositionAt(simTime()));
         curSpeed = relativeOffset.OffsetSpeed(mobility->getCurrentSpeed());
         curHeading = relativeOffset.OffsetHeading(
-                mobility->getCurrentDirection());
+            mobility->getCurrentDirection());
         curAccel = relativeOffset.OffsetAccel(mobility->getCurrentAcceleration());
-
-    } else {
+    }
+    else {
         curPositionConfidence = relativeOffsetConfidence.OffsetPosConf(
-                curPositionConfidenceOrig);
+            curPositionConfidenceOrig);
         curSpeedConfidence = relativeOffsetConfidence.OffsetSpeedConf(
-                curSpeedConfidenceOrig);
+            curSpeedConfidenceOrig);
         curHeadingConfidence = relativeOffsetConfidence.OffsetHeadingConf(
-                curHeadingConfidenceOrig);
+            curHeadingConfidenceOrig);
         curAccelConfidence = relativeOffsetConfidence.OffsetAccelConf(
-                curAccelConfidenceOrig);
+            curAccelConfidenceOrig);
 
         RelativeOffset relativeOffset = RelativeOffset(&curPositionConfidence,
-                &curSpeedConfidence, &curHeadingConfidence, &curAccelConfidence,
-                &deltaRPosition, &deltaThetaPosition, &deltaSpeed,
-                &deltaHeading, &deltaAccel);
+            &curSpeedConfidence, &curHeadingConfidence, &curAccelConfidence,
+            &deltaRPosition, &deltaThetaPosition, &deltaSpeed,
+            &deltaHeading, &deltaAccel);
 
         //    GaussianRandom relativeOffset = GaussianRandom(&curPositionConfidence,
         //            &curSpeedConfidence, &curHeadingConfidence);
 
         curPosition = relativeOffset.OffsetPosition(
-                mobility->getPositionAt(simTime()));
+            mobility->getPositionAt(simTime()));
         curSpeed = relativeOffset.OffsetSpeed(mobility->getCurrentSpeed());
         curHeading = relativeOffset.OffsetHeading(
-                mobility->getCurrentDirection());
+            mobility->getCurrentDirection());
         curAccel = relativeOffset.OffsetAccel(mobility->getCurrentAcceleration());
     }
 
     if (params.writeVeReMi) {
         VeReMi.serializeRawData(&curPosition, &curPositionConfidence, &curSpeed,
-                &curSpeedConfidence, &curHeading, &curHeadingConfidence,
-                &curAccel, &curAccelConfidence);
+            &curSpeedConfidence, &curHeading, &curHeadingConfidence,
+            &curAccel, &curAccelConfidence);
     }
 
-//the vehicle has moved. Code that reacts to new positions goes here.
-//member variables such as currentPosition and currentSpeed are updated in the parent class
+    //the vehicle has moved. Code that reacts to new positions goes here.
+    //member variables such as currentPosition and currentSpeed are updated in the parent class
 }
 
 // code is based on TracingApp::populateWSM(WaveShortMessage* wsm, int rcvId, int serial)
 void JosephVeinsApp::populateWSM(BaseFrame1609_4* wsm, LAddress::L2Type rcvId,
-        int serial) {
+    int serial)
+{
     F2MDBaseApplLayer::populateWSM(wsm, rcvId, serial);
     if (BasicSafetyMessage* bsm = dynamic_cast<BasicSafetyMessage*>(wsm)) {
 
@@ -1496,7 +1503,7 @@ void JosephVeinsApp::populateWSM(BaseFrame1609_4* wsm, LAddress::L2Type rcvId,
 
         std::pair<double, double> currLonLat = traci->getLonLat(curPosition);
         bsm->setSenderGpsCoordinates(
-                Coord(currLonLat.first, currLonLat.second));
+            Coord(currLonLat.first, currLonLat.second));
 
         bsm->setSenderSpeed(curSpeed);
         bsm->setSenderSpeedConfidence(curSpeedConfidence);
@@ -1522,32 +1529,33 @@ void JosephVeinsApp::populateWSM(BaseFrame1609_4* wsm, LAddress::L2Type rcvId,
                 bsm->setSenderPosConfidence(attackBsm.getSenderPosConfidence());
 
                 std::pair<double, double> currLonLat = traci->getLonLat(
-                        attackBsm.getSenderPos());
+                    attackBsm.getSenderPos());
                 bsm->setSenderGpsCoordinates(
-                        Coord(currLonLat.first, currLonLat.second));
+                    Coord(currLonLat.first, currLonLat.second));
 
                 bsm->setSenderSpeed(attackBsm.getSenderSpeed());
                 bsm->setSenderSpeedConfidence(
-                        attackBsm.getSenderSpeedConfidence());
+                    attackBsm.getSenderSpeedConfidence());
 
                 bsm->setSenderHeading(attackBsm.getSenderHeading());
                 bsm->setSenderHeadingConfidence(
-                        attackBsm.getSenderHeadingConfidence());
+                    attackBsm.getSenderHeadingConfidence());
 
                 bsm->setSenderAccel(attackBsm.getSenderAccel());
                 bsm->setSenderAccelConfidence(
-                        attackBsm.getSenderAccelConfidence());
+                    attackBsm.getSenderAccelConfidence());
 
                 bsm->setSenderWidth(attackBsm.getSenderWidth());
                 bsm->setSenderLength(attackBsm.getSenderLength());
-            } else {
+            }
+            else {
                 bsm->setSenderPos(curPosition);
                 bsm->setSenderPosConfidence(curPositionConfidence);
 
                 std::pair<double, double> currLonLat = traci->getLonLat(
-                        curPosition);
+                    curPosition);
                 bsm->setSenderGpsCoordinates(
-                        Coord(currLonLat.first, currLonLat.second));
+                    Coord(currLonLat.first, currLonLat.second));
 
                 bsm->setSenderSpeed(curSpeed);
                 bsm->setSenderSpeedConfidence(curSpeedConfidence);
@@ -1566,22 +1574,22 @@ void JosephVeinsApp::populateWSM(BaseFrame1609_4* wsm, LAddress::L2Type rcvId,
             }
         }
 
-//        GeneralLib genLib = GeneralLib();
-//        Coord posConf = bsm->getSenderPosConfidence();
-//        posConf = Coord(posConf.x + genLib.RandomDouble(0, 0.1*posConf.x) ,posConf.y + genLib.RandomDouble(0, 0.1*posConf.y),posConf.z);
-//        bsm->setSenderPosConfidence(posConf);
-//
-//        Coord spdConf = bsm->getSenderSpeedConfidence();
-//        spdConf = Coord(spdConf.x + genLib.RandomDouble(0, 0.1*spdConf.x) ,spdConf.y + genLib.RandomDouble(0, 0.1*spdConf.y),spdConf.z);
-//        bsm->setSenderSpeedConfidence(spdConf);
-//
-//        Coord accConf = bsm->getSenderAccelConfidence();
-//        accConf = Coord(accConf.x + genLib.RandomDouble(0, 0.1*accConf.x) ,accConf.y + genLib.RandomDouble(0, 0.1*accConf.y),accConf.z);
-//        bsm->setSenderAccelConfidence(accConf);
-//
-//        Coord headConf = bsm->getSenderHeadingConfidence();
-//        headConf = Coord(headConf.x + genLib.RandomDouble(0, 0.1*headConf.x) ,headConf.y + genLib.RandomDouble(0, 0.1*headConf.y),headConf.z);
-//        bsm->setSenderHeadingConfidence(headConf);
+        //        GeneralLib genLib = GeneralLib();
+        //        Coord posConf = bsm->getSenderPosConfidence();
+        //        posConf = Coord(posConf.x + genLib.RandomDouble(0, 0.1*posConf.x) ,posConf.y + genLib.RandomDouble(0, 0.1*posConf.y),posConf.z);
+        //        bsm->setSenderPosConfidence(posConf);
+        //
+        //        Coord spdConf = bsm->getSenderSpeedConfidence();
+        //        spdConf = Coord(spdConf.x + genLib.RandomDouble(0, 0.1*spdConf.x) ,spdConf.y + genLib.RandomDouble(0, 0.1*spdConf.y),spdConf.z);
+        //        bsm->setSenderSpeedConfidence(spdConf);
+        //
+        //        Coord accConf = bsm->getSenderAccelConfidence();
+        //        accConf = Coord(accConf.x + genLib.RandomDouble(0, 0.1*accConf.x) ,accConf.y + genLib.RandomDouble(0, 0.1*accConf.y),accConf.z);
+        //        bsm->setSenderAccelConfidence(accConf);
+        //
+        //        Coord headConf = bsm->getSenderHeadingConfidence();
+        //        headConf = Coord(headConf.x + genLib.RandomDouble(0, 0.1*headConf.x) ,headConf.y + genLib.RandomDouble(0, 0.1*headConf.y),headConf.z);
+        //        bsm->setSenderHeadingConfidence(headConf);
 
         if (params.writeVeReMi) {
             VeReMi.serializeGroundTruth(bsm);
@@ -1589,7 +1597,8 @@ void JosephVeinsApp::populateWSM(BaseFrame1609_4* wsm, LAddress::L2Type rcvId,
     }
 }
 
-void JosephVeinsApp::addTargetNode(unsigned long id) {
+void JosephVeinsApp::addTargetNode(unsigned long id)
+{
     bool found = false;
     for (int var = 0; var < targetNodesLength; ++var) {
         if (targetNodes[var] == id) {
@@ -1602,7 +1611,8 @@ void JosephVeinsApp::addTargetNode(unsigned long id) {
         targetNodesLength++;
     }
 }
-void JosephVeinsApp::removeTargetNode(unsigned long id) {
+void JosephVeinsApp::removeTargetNode(unsigned long id)
+{
     int index = -1;
     for (int var = 0; var < targetNodesLength; ++var) {
         if (targetNodes[var] == id) {
@@ -1616,10 +1626,12 @@ void JosephVeinsApp::removeTargetNode(unsigned long id) {
     }
     targetNodesLength--;
 }
-void JosephVeinsApp::clearTargetNodes() {
+void JosephVeinsApp::clearTargetNodes()
+{
     targetNodesLength = 0;
 }
-bool JosephVeinsApp::isTargetNode(unsigned long id) {
+bool JosephVeinsApp::isTargetNode(unsigned long id)
+{
     for (int var = 0; var < targetNodesLength; ++var) {
         if (targetNodes[var] == id) {
             return true;
@@ -1628,7 +1640,8 @@ bool JosephVeinsApp::isTargetNode(unsigned long id) {
     return false;
 }
 
-void JosephVeinsApp::addAccusedNode(unsigned long id) {
+void JosephVeinsApp::addAccusedNode(unsigned long id)
+{
     bool found = false;
     for (int var = 0; var < accusedNodesLength; ++var) {
         if (accusedNodes[var] == id) {
@@ -1641,7 +1654,8 @@ void JosephVeinsApp::addAccusedNode(unsigned long id) {
         accusedNodesLength++;
     }
 }
-void JosephVeinsApp::removeAccusedNode(unsigned long id) {
+void JosephVeinsApp::removeAccusedNode(unsigned long id)
+{
     int index = -1;
     for (int var = 0; var < accusedNodesLength; ++var) {
         if (accusedNodes[var] == id) {
@@ -1656,11 +1670,13 @@ void JosephVeinsApp::removeAccusedNode(unsigned long id) {
     accusedNodesLength--;
 }
 
-void JosephVeinsApp::clearAccusedNodes() {
+void JosephVeinsApp::clearAccusedNodes()
+{
     accusedNodesLength = 0;
 }
 
-bool JosephVeinsApp::isAccusedNode(unsigned long id) {
+bool JosephVeinsApp::isAccusedNode(unsigned long id)
+{
     for (int var = 0; var < accusedNodesLength; ++var) {
         if (accusedNodes[var] == id) {
             return true;
@@ -1670,7 +1686,8 @@ bool JosephVeinsApp::isAccusedNode(unsigned long id) {
 }
 
 //F2MD
-void JosephVeinsApp::addMyBsm(BasicSafetyMessage bsm) {
+void JosephVeinsApp::addMyBsm(BasicSafetyMessage bsm)
+{
     if (myBsmNum < MYBSM_SIZE) {
         myBsmNum++;
     }

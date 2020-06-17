@@ -67,6 +67,26 @@ bool ExperiApp::CheckNodeForReport(unsigned long myPseudonym,
 
     double factorList[bsmCheckListSize];
 
+    //std::cout<< "ProximityPlausibility" << '\n';
+    for (int var = 0; var < bsmCheckListSize; ++var) {
+        factorList[var] = bsmCheckList[var].getProximityPlausibility();
+    }
+
+    temp = AggregateFactorsListDouble(bsmCheck->getProximityPlausibility(),
+            factorList, bsmCheckListSize, zeroSum, zeroCount);
+    if (temp < minFactor) {
+        minFactor = temp;
+    }
+
+    if (temp < Threshold) {
+        checkFailed = true;
+        prntApp->incFlags(mdChecksTypes::ProximityPlausibility,
+                mbTypes::intMbs[bsm->getSenderMbType()]);
+        prntAppInst->incFlags(mdChecksTypes::ProximityPlausibility,
+                mbTypes::intMbs[bsm->getSenderMbType()]);
+    }
+
+
     //std::cout<< "RangePlausibility" << '\n';
     for (int var = 0; var < bsmCheckListSize; ++var) {
         factorList[var] = bsmCheckList[var].getRangePlausibility();
@@ -290,7 +310,10 @@ std::tuple<double, int> ExperiApp::getZeroNumber(BasicSafetyMessage * bsm,
         }
     }
 
-    //std::cout<< "RangePlausibility" << '\n';
+    if (bsmCheck->getProximityPlausibility() <= 0) {
+        zeroSum = zeroSum + bsmCheck->getProximityPlausibility();
+        zeroCount++;
+    }
     if (bsmCheck->getRangePlausibility() <= 0) {
         zeroSum = zeroSum + bsmCheck->getRangePlausibility();
         zeroCount++;
@@ -328,6 +351,10 @@ std::tuple<double, int> ExperiApp::getZeroNumber(BasicSafetyMessage * bsm,
     }
 
     for (int var = 0; var < bsmCheckListSize; ++var) {
+        if (bsmCheckList[var].getProximityPlausibility() <= 0) {
+            zeroSum = zeroSum + bsmCheckList[var].getProximityPlausibility();
+            zeroCount++;
+        }
         if (bsmCheckList[var].getRangePlausibility() <= 0) {
             zeroSum = zeroSum + bsmCheckList[var].getRangePlausibility();
             zeroCount++;

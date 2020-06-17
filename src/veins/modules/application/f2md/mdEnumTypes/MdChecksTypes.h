@@ -17,7 +17,8 @@
 namespace mdChecksTypes {
 
 enum Checks {
-    RangePlausibility = 0,
+    ProximityPlausibility = 0,
+    RangePlausibility,
     PositionPlausibility,
     SpeedPlausibility,
     PositionConsistancy,
@@ -38,17 +39,30 @@ enum Checks {
     SIZE_OF_ENUM
 };
 
-static const char* ChecksNames[] = { "RangePlausibility",
-        "PositionPlausibility", "SpeedPlausibility", "PositionConsistancy",
-        "PositionSpeedConsistancy", "PositionSpeedMaxConsistancy",
-        "SpeedConsistancy", "BeaconFrequency", "Intersection",
-        "SuddenAppearence", "PositionHeadingConsistancy", "kalmanPSCP",
-        "kalmanPSCS", "kalmanPSCSP", "kalmanPSCSS", "kalmanPCC", "kalmanPACS",
-        "kalmanSCC", };
+static const char* ChecksNames[] = {
+    "ProximityPlausibility",
+    "RangePlausibility",
+    "PositionPlausibility",
+    "SpeedPlausibility",
+    "PositionConsistancy",
+    "PositionSpeedConsistancy",
+    "PositionSpeedMaxConsistancy",
+    "SpeedConsistancy",
+    "BeaconFrequency",
+    "Intersection",
+    "SuddenAppearence",
+    "PositionHeadingConsistancy",
+    "kalmanPSCP",
+    "kalmanPSCS",
+    "kalmanPSCSP",
+    "kalmanPSCSS",
+    "kalmanPCC",
+    "kalmanPACS",
+    "kalmanSCC",
+};
 
-static_assert(sizeof(mdChecksTypes::ChecksNames)/sizeof(char*) == mdChecksTypes::SIZE_OF_ENUM
-        , "sizes dont match");
+static_assert(sizeof(mdChecksTypes::ChecksNames) / sizeof(char*) == mdChecksTypes::SIZE_OF_ENUM, "sizes dont match");
 
-}
+} // namespace mdChecksTypes
 
 #endif

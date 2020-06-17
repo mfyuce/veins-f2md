@@ -14,6 +14,7 @@
 AppPrintable::AppPrintable(const char* name) {
     strcpy(this->name, name);
 
+    flagsProximityPlausibility_1 = 0;
     flagsRangePlausibility_1 = 0;
     flagsPositionPlausibility_1 = 0;
     flagsSpeedPlausibility_1 = 0;
@@ -34,6 +35,7 @@ AppPrintable::AppPrintable(const char* name) {
     flagskalmanPACS_1 = 0;
     flagskalmanSCC_1 = 0;
 
+    flagsProximityPlausibility_2 = 0;
     flagsRangePlausibility_2 = 0;
     flagsPositionPlausibility_2 = 0;
     flagsSpeedPlausibility_2 = 0;
@@ -61,6 +63,7 @@ AppPrintable::AppPrintable(const char* name) {
 }
 
 AppPrintable::AppPrintable() {
+    flagsProximityPlausibility_1 = 0;
     flagsRangePlausibility_1 = 0;
     flagsPositionPlausibility_1 = 0;
     flagsSpeedPlausibility_1 = 0;
@@ -81,6 +84,7 @@ AppPrintable::AppPrintable() {
     flagskalmanPACS_1 = 0;
     flagskalmanSCC_1 = 0;
 
+    flagsProximityPlausibility_2 = 0;
     flagsRangePlausibility_2 = 0;
     flagsPositionPlausibility_2 = 0;
     flagsSpeedPlausibility_2 = 0;
@@ -148,6 +152,8 @@ void AppPrintable::incCumulFlags(mbTypes::Mbs mbType) {
 
 void AppPrintable::printOutDebug() {
 
+    std::cout << "flagsProximityPlausibility_1 " << flagsProximityPlausibility_1
+            << "\n";
     std::cout << "flagsRangePlausibility_1 " << flagsRangePlausibility_1
             << "\n";
     std::cout << "flagsPositionPlausibility_1 " << flagsPositionPlausibility_1
@@ -163,8 +169,7 @@ void AppPrintable::printOutDebug() {
     std::cout << "flagsSpeedConsistancy_1 " << flagsSpeedConsistancy_1 << "\n";
     std::cout << "flagsBeaconFrequency_1 " << flagsBeaconFrequency_1 << "\n";
     std::cout << "flagsIntersection_1 " << flagsIntersection_1 << "\n";
-    std::cout << "flagsRangePlausibility_1 " << flagsRangePlausibility_1
-            << "\n";
+
     std::cout << "flagsPositionHeadingConsistancy_1 "
             << flagsPositionHeadingConsistancy_1 << "\n";
 
@@ -188,6 +193,10 @@ void AppPrintable::incFlags(mdChecksTypes::Checks check, mbTypes::Mbs mbType) {
     switch (mbType) {
     case mbTypes::Genuine: {
         switch (check) {
+        case mdChecksTypes::ProximityPlausibility:
+            flagsProximityPlausibility_1++;
+            break;
+
         case mdChecksTypes::RangePlausibility:
             flagsRangePlausibility_1++;
             break;
@@ -248,6 +257,10 @@ void AppPrintable::incFlags(mdChecksTypes::Checks check, mbTypes::Mbs mbType) {
         break;
     case mbTypes::GlobalAttacker: {
         switch (check) {
+        case mdChecksTypes::ProximityPlausibility:
+            flagsProximityPlausibility_1++;
+            break;
+
         case mdChecksTypes::RangePlausibility:
             flagsRangePlausibility_1++;
             break;
@@ -307,6 +320,9 @@ void AppPrintable::incFlags(mdChecksTypes::Checks check, mbTypes::Mbs mbType) {
         break;
     case mbTypes::LocalAttacker: {
         switch (check) {
+        case mdChecksTypes::ProximityPlausibility:
+            flagsProximityPlausibility_2++;
+            break;
         case mdChecksTypes::RangePlausibility:
             flagsRangePlausibility_2++;
             break;
@@ -368,6 +384,7 @@ void AppPrintable::incFlags(mdChecksTypes::Checks check, mbTypes::Mbs mbType) {
 }
 
 void AppPrintable::resetAll() {
+    flagsProximityPlausibility_1 = 0;
     flagsRangePlausibility_1 = 0;
     flagsPositionPlausibility_1 = 0;
     flagsSpeedPlausibility_1 = 0;
@@ -387,6 +404,7 @@ void AppPrintable::resetAll() {
     flagskalmanPACS_1 = 0;
     flagskalmanSCC_1 = 0;
 
+    flagsProximityPlausibility_2 = 0;
     flagsRangePlausibility_2 = 0;
     flagsPositionPlausibility_2 = 0;
     flagsSpeedPlausibility_2 = 0;
@@ -472,6 +490,9 @@ void AppPrintable::getFlagsPrintable(char* outStr, double density,
 
     strcat(line, name); //1
     strcat(line, " ");
+    sprintf(data, "%f", flagsProximityPlausibility_1); //2
+    strcat(line, data);
+    strcat(line, " ");
     sprintf(data, "%f", flagsRangePlausibility_1); //2
     strcat(line, data);
     strcat(line, " ");
@@ -524,6 +545,9 @@ void AppPrintable::getFlagsPrintable(char* outStr, double density,
     strcat(line, data);
     strcat(line, " ");
     sprintf(data, "%f", flagskalmanSCC_1); //19
+    strcat(line, data);
+    strcat(line, " ");
+    sprintf(data, "%f", flagsProximityPlausibility_2); //20
     strcat(line, data);
     strcat(line, " ");
     sprintf(data, "%f", flagsRangePlausibility_2); //20

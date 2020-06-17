@@ -10,7 +10,7 @@
  *******************************************************************************/
 
 #include <stdio.h>
-#include <stdlib.h>     /* atof */
+#include <stdlib.h> /* atof */
 #include <boost/algorithm/string.hpp>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -23,9 +23,10 @@ using namespace std;
 using namespace boost;
 
 CaTChChecks::CaTChChecks(int version, unsigned long myPseudonym,
-        veins::Coord myPosition, veins::Coord myPositionConfidence, veins::Coord myHeading,
-        veins::Coord myHeadingConfidence, veins::Coord mySize, veins::Coord myLimits,
-        LinkControl* LinkC, F2MDParameters *params) {
+    veins::Coord myPosition, veins::Coord myPositionConfidence, veins::Coord myHeading,
+    veins::Coord myHeadingConfidence, veins::Coord mySize, veins::Coord myLimits,
+    LinkControl* LinkC, std::unordered_map<LAddress::L2Type, Coord>* realDynamicMap, LAddress::L2Type myId, F2MDParameters* params)
+{
     this->version = version;
     this->myPseudonym = myPseudonym;
     this->myPosition = myPosition;
@@ -37,78 +38,118 @@ CaTChChecks::CaTChChecks(int version, unsigned long myPseudonym,
     this->MAX_PLAUSIBLE_ACCEL = myLimits.y;
     this->MAX_PLAUSIBLE_DECEL = myLimits.z;
     this->LinkC = LinkC;
+    this->realDynamicMap = realDynamicMap;
     this->params = params;
+    this->myId = myId;
 }
 
-double CaTChChecks::RangePlausibilityCheck(veins::Coord * receiverPosition,
-        veins::Coord * receiverPositionConfidence, veins::Coord * senderPosition,
-        veins::Coord * senderPositionConfidence) {
+double CaTChChecks::ProximityPlausibilityCheck(veins::Coord* testPosition, veins::Coord* myPosition, veins::Coord* myHeading)
+{
+    double distance = mdmLib.calculateDistancePtr(testPosition, myPosition);
+    veins::Coord relativePos = veins::Coord(testPosition->x - myPosition->x,
+        testPosition->y - myPosition->y,
+        testPosition->z - myPosition->z);
+    double positionAngle = fabs(mdmLib.calculateHeadingAngle(relativePos));
+    if (distance < params->MAX_PROXIMITY_RANGE_L) {
+        if (distance < params->MAX_PROXIMITY_RANGE_W * 2 || (positionAngle < 90 && distance < (params->MAX_PROXIMITY_RANGE_W / cos((90 - positionAngle) * M_PI / 180)))) {
+            double minDistance = 9999;
+
+            for (std::pair<LAddress::L2Type, veins::Coord> x : *realDynamicMap) {
+                if (x.first != myId) {
+                    double testDistance = mdmLib.calculateDistancePtr(testPosition, &x.second);
+                    if (minDistance > testDistance) {
+                        minDistance = testDistance;
+                    }
+                }
+            }
+
+            if (minDistance < (2 * params->MAX_PROXIMITY_DISTANCE)) {
+                return 1 - minDistance / (2 * params->MAX_PROXIMITY_DISTANCE);
+            }
+            else {
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
+double CaTChChecks::RangePlausibilityCheck(veins::Coord* receiverPosition,
+    veins::Coord* receiverPositionConfidence, veins::Coord* senderPosition,
+    veins::Coord* senderPositionConfidence)
+{
 
     double distance = mdmLib.calculateDistancePtr(senderPosition,
-            receiverPosition);
+        receiverPosition);
 
     double factor = mdmLib.CircleCircleFactor(distance,
-            senderPositionConfidence->x, receiverPositionConfidence->x,
-            params->MAX_PLAUSIBLE_RANGE);
+        senderPositionConfidence->x, receiverPositionConfidence->x,
+        params->MAX_PLAUSIBLE_RANGE);
 
     return factor;
 }
 
-double CaTChChecks::PositionConsistancyCheck(veins::Coord * curPosition,
-        veins::Coord * curPositionConfidence, veins::Coord * oldPosition,
-        veins::Coord * oldPositionConfidence, double time) {
+double CaTChChecks::PositionConsistancyCheck(veins::Coord* curPosition,
+    veins::Coord* curPositionConfidence, veins::Coord* oldPosition,
+    veins::Coord* oldPositionConfidence, double time)
+{
     double distance = mdmLib.calculateDistancePtr(curPosition, oldPosition);
     double factor = mdmLib.CircleCircleFactor(distance,
-            curPositionConfidence->x, oldPositionConfidence->x,
-            MAX_PLAUSIBLE_SPEED * time);
+        curPositionConfidence->x, oldPositionConfidence->x,
+        MAX_PLAUSIBLE_SPEED * time);
 
     return factor;
 }
 
 double CaTChChecks::SpeedConsistancyCheck(double curSpeed,
-        double curSpeedConfidence, double oldspeed, double oldSpeedConfidence,
-        double time) {
+    double curSpeedConfidence, double oldspeed, double oldSpeedConfidence,
+    double time)
+{
 
     double speedDelta = curSpeed - oldspeed;
 
-//    double attFact = mdmLib.gaussianSum(1, 1 / 3);
-//    if (time >= 1) {
-//        attFact = time;
-//    }
+    //    double attFact = mdmLib.gaussianSum(1, 1 / 3);
+    //    if (time >= 1) {
+    //        attFact = time;
+    //    }
 
     double factor = 1;
     if (speedDelta > 0) {
         factor = mdmLib.SegmentSegmentFactor(speedDelta, curSpeedConfidence,
-                oldSpeedConfidence, MAX_PLAUSIBLE_ACCEL * time);
-    } else {
+            oldSpeedConfidence, MAX_PLAUSIBLE_ACCEL * time);
+    }
+    else {
         factor = mdmLib.SegmentSegmentFactor(fabs(speedDelta),
-                curSpeedConfidence, oldSpeedConfidence,
-                MAX_PLAUSIBLE_DECEL * time);
+            curSpeedConfidence, oldSpeedConfidence,
+            MAX_PLAUSIBLE_DECEL * time);
     }
 
     return factor;
 }
 
 double CaTChChecks::SpeedPlausibilityCheck(double speed,
-        double speedConfidence) {
+    double speedConfidence)
+{
     if ((fabs(speed) + fabs(speedConfidence) / 2) < MAX_PLAUSIBLE_SPEED) {
         return 1;
-    } else if ((fabs(speed) - fabs(speedConfidence) / 2)
-            > MAX_PLAUSIBLE_SPEED) {
+    }
+    else if ((fabs(speed) - fabs(speedConfidence) / 2) > MAX_PLAUSIBLE_SPEED) {
         return 0;
-    } else {
-        double factor = (fabs(speedConfidence) / 2
-                + (MAX_PLAUSIBLE_SPEED - fabs(speed))) / fabs(speedConfidence);
+    }
+    else {
+        double factor = (fabs(speedConfidence) / 2 + (MAX_PLAUSIBLE_SPEED - fabs(speed))) / fabs(speedConfidence);
 
         return factor;
     }
 }
 
-double CaTChChecks::PositionSpeedMaxConsistancyCheck(veins::Coord * curPosition,
-        veins::Coord * curPositionConfidence, veins::Coord * oldPosition,
-        veins::Coord * oldPositionConfidence, double curSpeed,
-        double curSpeedConfidence, double oldspeed, double oldSpeedConfidence,
-        double time) {
+double CaTChChecks::PositionSpeedMaxConsistancyCheck(veins::Coord* curPosition,
+    veins::Coord* curPositionConfidence, veins::Coord* oldPosition,
+    veins::Coord* oldPositionConfidence, double curSpeed,
+    double curSpeedConfidence, double oldspeed, double oldSpeedConfidence,
+    double time)
+{
 
     if (time < params->MAX_TIME_DELTA) {
 
@@ -121,58 +162,59 @@ double CaTChChecks::PositionSpeedMaxConsistancyCheck(veins::Coord * curPosition,
         double oldR = oldPositionConfidence->x / time + oldSpeedConfidence;
 
         double maxfactor = mdmLib.OneSidedCircleSegmentFactor(
-                maxspeed - theoreticalSpeed, curR, oldR,
-                (MAX_PLAUSIBLE_DECEL + params->MAX_MGT_RNG) * time);
+            maxspeed - theoreticalSpeed, curR, oldR,
+            (MAX_PLAUSIBLE_DECEL + params->MAX_MGT_RNG) * time);
 
         double minfactor = mdmLib.OneSidedCircleSegmentFactor(
-                theoreticalSpeed - minspeed, curR, oldR,
-                (MAX_PLAUSIBLE_ACCEL + params->MAX_MGT_RNG) * time);
+            theoreticalSpeed - minspeed, curR, oldR,
+            (MAX_PLAUSIBLE_ACCEL + params->MAX_MGT_RNG) * time);
 
         double factor = 1;
 
         if (minfactor < maxfactor) {
             factor = minfactor;
-        } else {
+        }
+        else {
             factor = maxfactor;
         }
 
-//        factor = (factor - 0.5) * 2;
-//        factor = mdmLib.gaussianSum(factor, (1.0 / 4.5));
-//        if (factor > 0.75) {
-//            factor = 1;
-//        }
-//
-//        if (factor <0.001) {
-//            factor = 0;
-//        }
+        //        factor = (factor - 0.5) * 2;
+        //        factor = mdmLib.gaussianSum(factor, (1.0 / 4.5));
+        //        if (factor > 0.75) {
+        //            factor = 1;
+        //        }
+        //
+        //        if (factor <0.001) {
+        //            factor = 0;
+        //        }
 
         if (factor < 0) {
             std::cout << "=======================================" << '\n';
 
             std::cout << " MAX_PLAUSIBLE_DECEL:" << MAX_PLAUSIBLE_DECEL
-                    << " MAX_PLAUSIBLE_ACCEL:" << MAX_PLAUSIBLE_ACCEL << '\n';
+                      << " MAX_PLAUSIBLE_ACCEL:" << MAX_PLAUSIBLE_ACCEL << '\n';
 
             std::cout << " time:" << time << " distance:" << distance << '\n';
             std::cout << " maxspeed:" << maxspeed << " minspeed:" << minspeed
-                    << " theoreticalSpeed:" << theoreticalSpeed << '\n';
+                      << " theoreticalSpeed:" << theoreticalSpeed << '\n';
             std::cout << " curSpeed:" << curSpeed << '\n';
             std::cout << " oldspeed:" << oldspeed << '\n';
             //exit(0);
-
         }
 
         return factor;
-
-    } else {
+    }
+    else {
         return 1;
     }
 }
 
-double CaTChChecks::PositionSpeedConsistancyCheck(veins::Coord * curPosition,
-        veins::Coord * curPositionConfidence, veins::Coord * oldPosition,
-        veins::Coord * oldPositionConfidence, double curSpeed,
-        double curSpeedConfidence, double oldspeed, double oldSpeedConfidence,
-        double time) {
+double CaTChChecks::PositionSpeedConsistancyCheck(veins::Coord* curPosition,
+    veins::Coord* curPositionConfidence, veins::Coord* oldPosition,
+    veins::Coord* oldPositionConfidence, double curSpeed,
+    double curSpeedConfidence, double oldspeed, double oldSpeedConfidence,
+    double time)
+{
 
     if (time < params->MAX_TIME_DELTA) {
         double distance = mdmLib.calculateDistancePtr(curPosition, oldPosition);
@@ -189,46 +231,37 @@ double CaTChChecks::PositionSpeedConsistancyCheck(veins::Coord * curPosition,
         }
         double minSpeed = std::min(curSpeed, oldspeed);
 
-        double addon_mgt_range = params->MAX_MGT_RNG_DOWN + 0.3571 * minSpeed
-                - 0.01694 * minSpeed * minSpeed;
+        double addon_mgt_range = params->MAX_MGT_RNG_DOWN + 0.3571 * minSpeed - 0.01694 * minSpeed * minSpeed;
         if (addon_mgt_range < 0) {
             addon_mgt_range = 0;
         }
 
         double retDistance_1[2];
         mdmLib.calculateMaxMinDist(curTest_1, oldTest_1, time,
-                MAX_PLAUSIBLE_ACCEL, MAX_PLAUSIBLE_DECEL, MAX_PLAUSIBLE_SPEED,
-                retDistance_1);
-        double factorMin_1 = 1
-                - mdmLib.CircleCircleFactor(distance, curPositionConfidence->x,
-                        oldPositionConfidence->x, retDistance_1[0]);
+            MAX_PLAUSIBLE_ACCEL, MAX_PLAUSIBLE_DECEL, MAX_PLAUSIBLE_SPEED,
+            retDistance_1);
+        double factorMin_1 = 1 - mdmLib.CircleCircleFactor(distance, curPositionConfidence->x, oldPositionConfidence->x, retDistance_1[0]);
         double factorMax_1 = mdmLib.OneSidedCircleSegmentFactor(distance,
-                curPositionConfidence->x, oldPositionConfidence->x,
-                retDistance_1[1] + params->MAX_MGT_RNG_UP);
+            curPositionConfidence->x, oldPositionConfidence->x,
+            retDistance_1[1] + params->MAX_MGT_RNG_UP);
 
         double retDistance_2[2];
         mdmLib.calculateMaxMinDist(curTest_2, oldTest_2, time,
-                MAX_PLAUSIBLE_ACCEL, MAX_PLAUSIBLE_DECEL, MAX_PLAUSIBLE_SPEED,
-                retDistance_2);
-        double factorMin_2 = 1
-                - mdmLib.OneSidedCircleSegmentFactor(distance,
-                        curPositionConfidence->x, oldPositionConfidence->x,
-                        retDistance_2[0] - addon_mgt_range);
+            MAX_PLAUSIBLE_ACCEL, MAX_PLAUSIBLE_DECEL, MAX_PLAUSIBLE_SPEED,
+            retDistance_2);
+        double factorMin_2 = 1 - mdmLib.OneSidedCircleSegmentFactor(distance, curPositionConfidence->x, oldPositionConfidence->x, retDistance_2[0] - addon_mgt_range);
         double factorMax_2 = mdmLib.OneSidedCircleSegmentFactor(distance,
-                curPositionConfidence->x, oldPositionConfidence->x,
-                retDistance_2[1] + params->MAX_MGT_RNG_UP);
+            curPositionConfidence->x, oldPositionConfidence->x,
+            retDistance_2[1] + params->MAX_MGT_RNG_UP);
 
         double retDistance_0[2];
         mdmLib.calculateMaxMinDist(curSpeed, oldspeed, time,
-                MAX_PLAUSIBLE_ACCEL, MAX_PLAUSIBLE_DECEL, MAX_PLAUSIBLE_SPEED,
-                retDistance_0);
-        double factorMin_0 = 1
-                - mdmLib.OneSidedCircleSegmentFactor(distance,
-                        curPositionConfidence->x, oldPositionConfidence->x,
-                        retDistance_0[0] - addon_mgt_range);
+            MAX_PLAUSIBLE_ACCEL, MAX_PLAUSIBLE_DECEL, MAX_PLAUSIBLE_SPEED,
+            retDistance_0);
+        double factorMin_0 = 1 - mdmLib.OneSidedCircleSegmentFactor(distance, curPositionConfidence->x, oldPositionConfidence->x, retDistance_0[0] - addon_mgt_range);
         double factorMax_0 = mdmLib.OneSidedCircleSegmentFactor(distance,
-                curPositionConfidence->x, oldPositionConfidence->x,
-                retDistance_0[1] + params->MAX_MGT_RNG_UP);
+            curPositionConfidence->x, oldPositionConfidence->x,
+            retDistance_0[1] + params->MAX_MGT_RNG_UP);
 
         //return std::min(factorMin_0, factorMax_0);
 
@@ -236,36 +269,36 @@ double CaTChChecks::PositionSpeedConsistancyCheck(veins::Coord * curPosition,
         double factorMax = (factorMax_1 + factorMax_0 + factorMax_2) / 3.0;
 
         return std::min(factorMin, factorMax);
-
-    } else {
+    }
+    else {
         return 1;
     }
 }
 
-double CaTChChecks::IntersectionCheck(veins::Coord * nodePosition1,
-        veins::Coord * nodePositionConfidence1, veins::Coord * nodePosition2,
-        veins::Coord * nodePositionConfidence2, veins::Coord * nodeHeading1,
-        veins::Coord * nodeHeading2, veins::Coord * nodeSize1, veins::Coord * nodeSize2,
-        double deltaTime) {
+double CaTChChecks::IntersectionCheck(veins::Coord* nodePosition1,
+    veins::Coord* nodePositionConfidence1, veins::Coord* nodePosition2,
+    veins::Coord* nodePositionConfidence2, veins::Coord* nodeHeading1,
+    veins::Coord* nodeHeading2, veins::Coord* nodeSize1, veins::Coord* nodeSize2,
+    double deltaTime)
+{
 
-//    double distance = mdmLib.calculateDistancePtr(nodePosition1, nodePosition2);
-//    double intFactor = mdmLib.CircleIntersectionFactor(
-//            nodePositionConfidence1->x, nodePositionConfidence2->x, distance,
-//            MIN_INT_DIST);
-//
-//    intFactor = intFactor *  ((MAX_DELTA_INTER - deltaTime) / MAX_DELTA_INTER);
-//
-//    intFactor = 1 - intFactor;
-//    return intFactor;
+    //    double distance = mdmLib.calculateDistancePtr(nodePosition1, nodePosition2);
+    //    double intFactor = mdmLib.CircleIntersectionFactor(
+    //            nodePositionConfidence1->x, nodePositionConfidence2->x, distance,
+    //            MIN_INT_DIST);
+    //
+    //    intFactor = intFactor *  ((MAX_DELTA_INTER - deltaTime) / MAX_DELTA_INTER);
+    //
+    //    intFactor = 1 - intFactor;
+    //    return intFactor;
 
     double intFactor2 = mdmLib.EllipseEllipseIntersectionFactor(*nodePosition1,
-            *nodePositionConfidence1, *nodePosition2, *nodePositionConfidence2,
-            mdmLib.calculateHeadingAnglePtr(nodeHeading1),
-            mdmLib.calculateHeadingAnglePtr(nodeHeading2), *nodeSize1,
-            *nodeSize2);
+        *nodePositionConfidence1, *nodePosition2, *nodePositionConfidence2,
+        mdmLib.calculateHeadingAnglePtr(nodeHeading1),
+        mdmLib.calculateHeadingAnglePtr(nodeHeading2), *nodeSize1,
+        *nodeSize2);
 
-    intFactor2 = 1.01
-            - intFactor2 * ((params->MAX_DELTA_INTER - deltaTime) / params->MAX_DELTA_INTER);
+    intFactor2 = 1.01 - intFactor2 * ((params->MAX_DELTA_INTER - deltaTime) / params->MAX_DELTA_INTER);
 
     if (intFactor2 > 1) {
         intFactor2 = 1;
@@ -276,11 +309,11 @@ double CaTChChecks::IntersectionCheck(veins::Coord * nodePosition1,
     }
 
     return intFactor2;
-
 }
 
-InterTest CaTChChecks::MultipleIntersectionCheck(NodeTable * detectedNodes,
-        BasicSafetyMessage * bsm) {
+InterTest CaTChChecks::MultipleIntersectionCheck(NodeTable* detectedNodes,
+    BasicSafetyMessage* bsm)
+{
     unsigned long senderPseudonym = bsm->getSenderPseudonym();
     veins::Coord senderPos = bsm->getSenderPos();
     veins::Coord senderPosConfidence = bsm->getSenderPosConfidence();
@@ -288,14 +321,14 @@ InterTest CaTChChecks::MultipleIntersectionCheck(NodeTable * detectedNodes,
 
     veins::Coord senderSize = veins::Coord(bsm->getSenderWidth(), bsm->getSenderLength());
 
-    NodeHistory * varNode;
+    NodeHistory* varNode;
 
     double INTScore = 0;
     InterTest intertTest = InterTest();
 
     INTScore = IntersectionCheck(&myPosition, &myPositionConfidence, &senderPos,
-            &senderPosConfidence, &myHeading, &senderHeading, &mySize,
-            &senderSize, 0.11);
+        &senderPosConfidence, &myHeading, &senderHeading, &mySize,
+        &senderSize, 0.11);
     if (INTScore < 1) {
         intertTest.addInterValue(myPseudonym, INTScore);
     }
@@ -303,26 +336,26 @@ InterTest CaTChChecks::MultipleIntersectionCheck(NodeTable * detectedNodes,
     for (int var = 0; var < detectedNodes->getNodesNum(); ++var) {
         if (detectedNodes->getNodePseudo(var) != senderPseudonym) {
             varNode = detectedNodes->getNodeHistoryAddr(
-                    detectedNodes->getNodePseudo(var));
+                detectedNodes->getNodePseudo(var));
 
             double deltaTime = mdmLib.calculateDeltaTime(
-                    varNode->getLatestBSMAddr(), bsm);
+                varNode->getLatestBSMAddr(), bsm);
 
             if (deltaTime < params->MAX_DELTA_INTER) {
 
                 veins::Coord varSize = veins::Coord(
-                        varNode->getLatestBSMAddr()->getSenderWidth(),
-                        varNode->getLatestBSMAddr()->getSenderLength());
+                    varNode->getLatestBSMAddr()->getSenderWidth(),
+                    varNode->getLatestBSMAddr()->getSenderLength());
 
                 INTScore = IntersectionCheck(
-                        &varNode->getLatestBSMAddr()->getSenderPos(),
-                        &varNode->getLatestBSMAddr()->getSenderPosConfidence(),
-                        &senderPos, &senderPosConfidence,
-                        &varNode->getLatestBSMAddr()->getSenderHeading(),
-                        &senderHeading, &varSize, &senderSize, deltaTime);
+                    &varNode->getLatestBSMAddr()->getSenderPos(),
+                    &varNode->getLatestBSMAddr()->getSenderPosConfidence(),
+                    &senderPos, &senderPosConfidence,
+                    &varNode->getLatestBSMAddr()->getSenderHeading(),
+                    &senderHeading, &varSize, &senderSize, deltaTime);
                 if (INTScore < 1) {
                     intertTest.addInterValue(detectedNodes->getNodePseudo(var),
-                            INTScore);
+                        INTScore);
                 }
             }
         }
@@ -331,11 +364,12 @@ InterTest CaTChChecks::MultipleIntersectionCheck(NodeTable * detectedNodes,
     return intertTest;
 }
 
-double CaTChChecks::SuddenAppearenceCheck(veins::Coord * receiverPosition,
-        veins::Coord * receiverPositionConfidence, veins::Coord * senderPosition,
-        veins::Coord * senderPositionConfidence) {
+double CaTChChecks::SuddenAppearenceCheck(veins::Coord* receiverPosition,
+    veins::Coord* receiverPositionConfidence, veins::Coord* senderPosition,
+    veins::Coord* senderPositionConfidence)
+{
     double distance = mdmLib.calculateDistancePtr(senderPosition,
-            receiverPosition);
+        receiverPosition);
 
     double r2 = params->MAX_SA_RANGE + receiverPositionConfidence->x;
 
@@ -343,25 +377,26 @@ double CaTChChecks::SuddenAppearenceCheck(veins::Coord * receiverPosition,
     if (senderPositionConfidence->x <= 0) {
         if (distance < r2) {
             factor = 0;
-        } else {
+        }
+        else {
             factor = 1;
         }
-    } else {
+    }
+    else {
         double area = mdmLib.calculateCircleCircleIntersection(
-                senderPositionConfidence->x, r2, distance);
+            senderPositionConfidence->x, r2, distance);
 
-        factor = area
-                / (PI * senderPositionConfidence->x
-                        * senderPositionConfidence->x);
+        factor = area / (PI * senderPositionConfidence->x * senderPositionConfidence->x);
         factor = 1 - factor;
     }
 
     return factor;
 }
 
-double CaTChChecks::PositionPlausibilityCheck(veins::Coord * senderPosition,
-        veins::Coord * senderPositionConfidence, double senderSpeed,
-        double senderSpeedConfidence) {
+double CaTChChecks::PositionPlausibilityCheck(veins::Coord* senderPosition,
+    veins::Coord* senderPositionConfidence, double senderSpeed,
+    double senderSpeedConfidence)
+{
 
     double speedd = senderSpeed - senderSpeedConfidence;
     if (speedd < 0) {
@@ -389,12 +424,12 @@ double CaTChChecks::PositionPlausibilityCheck(veins::Coord * senderPosition,
     int resolutionTheta = 0;
 
     for (double r = resolution; r < senderPositionConfidence->x;
-            r = r + resolution) {
+         r = r + resolution) {
         resolutionTheta = (int) (PI * r / (resolution));
         //std::cout << r<< "#" << resolution << "^" << resolutionTheta<<"-"<<"\n";
         for (int t = 0; t < resolutionTheta; ++t) {
             veins::Coord p(senderPosition->x + r * cos(2 * PI * t / resolutionTheta),
-                    senderPosition->y + r * sin(2 * PI * t / resolutionTheta));
+                senderPosition->y + r * sin(2 * PI * t / resolutionTheta));
 
             if (LinkC->calculateDistance(p, 50, 50) > params->MAX_DISTANCE_FROM_ROUTE) {
                 failedCount++;
@@ -406,23 +441,25 @@ double CaTChChecks::PositionPlausibilityCheck(veins::Coord * senderPosition,
     }
 
     return (1 - (failedCount / allCount));
-
 }
 
-double CaTChChecks::BeaconFrequencyCheck(double timeNew, double timeOld) {
+double CaTChChecks::BeaconFrequencyCheck(double timeNew, double timeOld)
+{
     double timeDelta = timeNew - timeOld;
     if (timeDelta < params->MAX_BEACON_FREQUENCY) {
         return 0;
-    } else {
+    }
+    else {
         return 1;
     }
 }
 
-double CaTChChecks::PositionHeadingConsistancyCheck(veins::Coord * curHeading,
-        veins::Coord * curHeadingConfidence, veins::Coord * oldPosition,
-        veins::Coord * oldPositionConfidence, veins::Coord * curPosition,
-        veins::Coord * curPositionConfidence, double deltaTime, double curSpeed,
-        double curSpeedConfidence) {
+double CaTChChecks::PositionHeadingConsistancyCheck(veins::Coord* curHeading,
+    veins::Coord* curHeadingConfidence, veins::Coord* oldPosition,
+    veins::Coord* oldPositionConfidence, veins::Coord* curPosition,
+    veins::Coord* curPositionConfidence, double deltaTime, double curSpeed,
+    double curSpeedConfidence)
+{
     if (deltaTime < params->POS_HEADING_TIME) {
         double distance = mdmLib.calculateDistancePtr(curPosition, oldPosition);
         if (distance < 1) {
@@ -436,8 +473,8 @@ double CaTChChecks::PositionHeadingConsistancyCheck(veins::Coord * curHeading,
         double curHeadingAngle = mdmLib.calculateHeadingAnglePtr(curHeading);
 
         veins::Coord relativePos = veins::Coord(curPosition->x - oldPosition->x,
-                curPosition->y - oldPosition->y,
-                curPosition->z - oldPosition->z);
+            curPosition->y - oldPosition->y,
+            curPosition->z - oldPosition->z);
         double positionAngle = mdmLib.calculateHeadingAnglePtr(&relativePos);
         double angleDelta = fabs(curHeadingAngle - positionAngle);
         if (angleDelta > 180) {
@@ -460,30 +497,29 @@ double CaTChChecks::PositionHeadingConsistancyCheck(veins::Coord * curHeading,
         if (curPositionConfidence->x == 0) {
             if (angleLow <= params->MAX_HEADING_CHANGE) {
                 curFactorLow = 1;
-            } else {
+            }
+            else {
                 curFactorLow = 0;
             }
-        } else {
+        }
+        else {
             curFactorLow =
-                    mdmLib.calculateCircleSegment(curPositionConfidence->x,
-                            curPositionConfidence->x + xLow)
-                            / (PI * curPositionConfidence->x
-                                    * curPositionConfidence->x);
+                mdmLib.calculateCircleSegment(curPositionConfidence->x,
+                    curPositionConfidence->x + xLow) /
+                (PI * curPositionConfidence->x * curPositionConfidence->x);
         }
 
         double oldFactorLow = 1;
         if (oldPositionConfidence->x == 0) {
             if (angleLow <= params->MAX_HEADING_CHANGE) {
                 oldFactorLow = 1;
-            } else {
+            }
+            else {
                 oldFactorLow = 0;
             }
-        } else {
-            oldFactorLow = 1
-                    - mdmLib.calculateCircleSegment(oldPositionConfidence->x,
-                            oldPositionConfidence->x - xLow)
-                            / (PI * oldPositionConfidence->x
-                                    * oldPositionConfidence->x);
+        }
+        else {
+            oldFactorLow = 1 - mdmLib.calculateCircleSegment(oldPositionConfidence->x, oldPositionConfidence->x - xLow) / (PI * oldPositionConfidence->x * oldPositionConfidence->x);
         }
 
         double xHigh = distance * cos(angleHigh * PI / 180);
@@ -491,72 +527,71 @@ double CaTChChecks::PositionHeadingConsistancyCheck(veins::Coord * curHeading,
         if (curPositionConfidence->x == 0) {
             if (angleHigh <= params->MAX_HEADING_CHANGE) {
                 curFactorHigh = 1;
-            } else {
+            }
+            else {
                 curFactorHigh = 0;
             }
-        } else {
+        }
+        else {
             curFactorHigh =
-                    mdmLib.calculateCircleSegment(curPositionConfidence->x,
-                            curPositionConfidence->x + xHigh)
-                            / (PI * curPositionConfidence->x
-                                    * curPositionConfidence->x);
+                mdmLib.calculateCircleSegment(curPositionConfidence->x,
+                    curPositionConfidence->x + xHigh) /
+                (PI * curPositionConfidence->x * curPositionConfidence->x);
         }
 
         double oldFactorHigh = 1;
         if (oldPositionConfidence->x == 0) {
             if (angleHigh <= params->MAX_HEADING_CHANGE) {
                 oldFactorHigh = 1;
-            } else {
+            }
+            else {
                 oldFactorHigh = 0;
             }
-        } else {
-            oldFactorHigh = 1
-                    - mdmLib.calculateCircleSegment(oldPositionConfidence->x,
-                            oldPositionConfidence->x - xHigh)
-                            / (PI * oldPositionConfidence->x
-                                    * oldPositionConfidence->x);
+        }
+        else {
+            oldFactorHigh = 1 - mdmLib.calculateCircleSegment(oldPositionConfidence->x, oldPositionConfidence->x - xHigh) / (PI * oldPositionConfidence->x * oldPositionConfidence->x);
         }
 
-        double factor = (curFactorLow + oldFactorLow + curFactorHigh
-                + oldFactorHigh) / 4;
+        double factor = (curFactorLow + oldFactorLow + curFactorHigh + oldFactorHigh) / 4;
 
-//    if(factor<=0.0){
-//
-//        std::cout<<"curPos: "<<curPosition<<'\n';
-//        std::cout<<"oldPos: "<<oldPosition<<'\n';
-//
-//        std::cout<<"relativePos: "<<relativePos<<'\n';
-//
-//        std::cout<<"curFactorLow: "<<curFactorLow<<'\n';
-//        std::cout<<"oldFactorLow: "<<oldFactorLow<<'\n';
-//        std::cout<<"curFactorHigh: "<<curFactorHigh<<'\n';
-//        std::cout<<"oldFactorHigh: "<<oldFactorHigh<<'\n';
-//        std::cout<<"positionAngle: "<<positionAngle<<'\n';
-//        std::cout<<"curHeadingAngle: "<<curHeadingAngle<<'\n';
-//        std::cout<<"angleDelta: "<<angleDelta<<'\n';
-//        std::cout<<"distance: "<<distance<<'\n';
-//        std::cout<<"distance: "<<distance<<'\n';
-//        std::cout<<"xLow: "<<xLow<<'\n';
-//        if(factor == 0){
-//            std::cout<<"ZERO: "<<factor<<'\n';
-//        }else{
-//            std::cout<<"NONZ: "<<factor<<'\n';
-//        }
-//
-//     //   exit(0);
-//    }
+        //    if(factor<=0.0){
+        //
+        //        std::cout<<"curPos: "<<curPosition<<'\n';
+        //        std::cout<<"oldPos: "<<oldPosition<<'\n';
+        //
+        //        std::cout<<"relativePos: "<<relativePos<<'\n';
+        //
+        //        std::cout<<"curFactorLow: "<<curFactorLow<<'\n';
+        //        std::cout<<"oldFactorLow: "<<oldFactorLow<<'\n';
+        //        std::cout<<"curFactorHigh: "<<curFactorHigh<<'\n';
+        //        std::cout<<"oldFactorHigh: "<<oldFactorHigh<<'\n';
+        //        std::cout<<"positionAngle: "<<positionAngle<<'\n';
+        //        std::cout<<"curHeadingAngle: "<<curHeadingAngle<<'\n';
+        //        std::cout<<"angleDelta: "<<angleDelta<<'\n';
+        //        std::cout<<"distance: "<<distance<<'\n';
+        //        std::cout<<"distance: "<<distance<<'\n';
+        //        std::cout<<"xLow: "<<xLow<<'\n';
+        //        if(factor == 0){
+        //            std::cout<<"ZERO: "<<factor<<'\n';
+        //        }else{
+        //            std::cout<<"NONZ: "<<factor<<'\n';
+        //        }
+        //
+        //     //   exit(0);
+        //    }
 
-//        factor = (factor - 0.5) * 2;
-//        factor = mdmLib.gaussianSum(factor, (1.0 / 4.5));
-//        if (factor > 0.75) {
-//            factor = 1;
-//        }
-//        if (factor <0.001) {
-//            factor = 0;
-//        }
+        //        factor = (factor - 0.5) * 2;
+        //        factor = mdmLib.gaussianSum(factor, (1.0 / 4.5));
+        //        if (factor > 0.75) {
+        //            factor = 1;
+        //        }
+        //        if (factor <0.001) {
+        //            factor = 0;
+        //        }
 
         return factor;
-    } else {
+    }
+    else {
         return 1;
     }
 }
@@ -569,15 +604,17 @@ static double max_f5 = 1;
 static double max_f6 = 1;
 static double max_f7 = 1;
 
-void CaTChChecks::KalmanPositionSpeedConsistancyCheck(veins::Coord * curPosition,
-        veins::Coord * curPositionConfidence, veins::Coord * curSpeed, veins::Coord * curAccel,
-        veins::Coord * curSpeedConfidence, double time, Kalman_SVI * kalmanSVI,
-        double retVal[]) {
+void CaTChChecks::KalmanPositionSpeedConsistancyCheck(veins::Coord* curPosition,
+    veins::Coord* curPositionConfidence, veins::Coord* curSpeed, veins::Coord* curAccel,
+    veins::Coord* curSpeedConfidence, double time, Kalman_SVI* kalmanSVI,
+    double retVal[])
+{
 
     if (!kalmanSVI->isInit()) {
         retVal[0] = 1;
         retVal[1] = 1;
-    } else {
+    }
+    else {
         if (time < params->MAX_KALMAN_TIME) {
             float Delta[4];
 
@@ -604,16 +641,14 @@ void CaTChChecks::KalmanPositionSpeedConsistancyCheck(veins::Coord * curPosition
                 curSpdConfY = params->KALMAN_MIN_SPEED_RANGE;
             }
 
-//            kalmanSVI->kalmanFilterJ_SVI.matrixOp_SVI.printVec("X0a", kalmanSVI->kalmanFilterJ_SVI.X0, 4);
-//            kalmanSVI->kalmanFilterJ_SVI.matrixOp_SVI.printVec("Xa", kalmanSVI->kalmanFilterJ_SVI.X, 4);
+            //            kalmanSVI->kalmanFilterJ_SVI.matrixOp_SVI.printVec("X0a", kalmanSVI->kalmanFilterJ_SVI.X0, 4);
+            //            kalmanSVI->kalmanFilterJ_SVI.matrixOp_SVI.printVec("Xa", kalmanSVI->kalmanFilterJ_SVI.X, 4);
 
             kalmanSVI->getDeltaPos(time, curPosition->x, curPosition->y,
-                    curSpeed->x, curSpeed->y, Ax, Ay, curPosConfX, curPosConfY,
-                    curSpdConfX, curSpdConfY, Delta);
+                curSpeed->x, curSpeed->y, Ax, Ay, curPosConfX, curPosConfY,
+                curSpdConfX, curSpdConfY, Delta);
 
-            double ret_1 = 1
-                    - sqrt(pow(Delta[0], 2.0) + pow(Delta[2], 2.0))
-                            / (params->KALMAN_POS_RANGE * curPosConfX * time);
+            double ret_1 = 1 - sqrt(pow(Delta[0], 2.0) + pow(Delta[2], 2.0)) / (params->KALMAN_POS_RANGE * curPosConfX * time);
             if (isnan(ret_1)) {
                 ret_1 = 0;
             }
@@ -625,9 +660,7 @@ void CaTChChecks::KalmanPositionSpeedConsistancyCheck(veins::Coord * curPosition
                 ret_1 = 0;
             }
 
-            double ret_2 = 1
-                    - sqrt(pow(Delta[1], 2.0) + pow(Delta[3], 2.0))
-                            / (params->KALMAN_SPEED_RANGE * curSpdConfX * time);
+            double ret_2 = 1 - sqrt(pow(Delta[1], 2.0) + pow(Delta[3], 2.0)) / (params->KALMAN_SPEED_RANGE * curSpdConfX * time);
             if (isnan(ret_2)) {
                 ret_2 = 0;
             }
@@ -639,36 +672,38 @@ void CaTChChecks::KalmanPositionSpeedConsistancyCheck(veins::Coord * curPosition
                 ret_2 = 0;
             }
 
-//            kalmanSVI->kalmanFilterJ_SVI.matrixOp_SVI.printVec("Xb", kalmanSVI->kalmanFilterJ_SVI.X, 4);
-//            kalmanSVI->kalmanFilterJ_SVI.matrixOp_SVI.printVec("Delta", Delta, 4);
+            //            kalmanSVI->kalmanFilterJ_SVI.matrixOp_SVI.printVec("Xb", kalmanSVI->kalmanFilterJ_SVI.X, 4);
+            //            kalmanSVI->kalmanFilterJ_SVI.matrixOp_SVI.printVec("Delta", Delta, 4);
 
             retVal[0] = ret_1;
             retVal[1] = ret_2;
-
-        } else {
+        }
+        else {
             retVal[0] = 1;
             retVal[1] = 1;
             kalmanSVI->setInitial(curPosition->x, curPosition->y, curSpeed->x,
-                    curSpeed->y);
+                curSpeed->y);
         }
     }
 }
 
-void CaTChChecks::KalmanPositionSpeedScalarConsistancyCheck(veins::Coord * curPosition,
-        veins::Coord * oldPosition, veins::Coord * curPositionConfidence, veins::Coord * curSpeed,
-        veins::Coord * curAccel, veins::Coord * curSpeedConfidence, double time,
-        Kalman_SC * kalmanSC, double retVal[]) {
+void CaTChChecks::KalmanPositionSpeedScalarConsistancyCheck(veins::Coord* curPosition,
+    veins::Coord* oldPosition, veins::Coord* curPositionConfidence, veins::Coord* curSpeed,
+    veins::Coord* curAccel, veins::Coord* curSpeedConfidence, double time,
+    Kalman_SC* kalmanSC, double retVal[])
+{
 
     if (!kalmanSC->isInit()) {
         retVal[0] = 1;
         retVal[1] = 1;
-    } else {
+    }
+    else {
         if (time < params->MAX_KALMAN_TIME) {
 
             float Delta[2];
 
             double distance = mdmLib.calculateDistancePtr(curPosition,
-                    oldPosition);
+                oldPosition);
             double curspd = mdmLib.calculateSpeedPtr(curSpeed);
             double curacl = mdmLib.calculateSpeedPtr(curAccel);
 
@@ -683,10 +718,9 @@ void CaTChChecks::KalmanPositionSpeedScalarConsistancyCheck(veins::Coord * curPo
             }
 
             kalmanSC->getDeltaPos(time, distance, curspd, curacl, curacl,
-                    curPosConfX, curSpdConfX, Delta);
+                curPosConfX, curSpdConfX, Delta);
 
-            double ret_1 = 1
-                    - (Delta[0] / (params->KALMAN_POS_RANGE * curPosConfX * time));
+            double ret_1 = 1 - (Delta[0] / (params->KALMAN_POS_RANGE * curPosConfX * time));
             if (isnan(ret_1)) {
                 ret_1 = 0;
             }
@@ -697,8 +731,7 @@ void CaTChChecks::KalmanPositionSpeedScalarConsistancyCheck(veins::Coord * curPo
             if (ret_1 < 0) {
                 ret_1 = 0;
             }
-            double ret_2 = 1
-                    - (Delta[1] / (params->KALMAN_SPEED_RANGE * curSpdConfX * time));
+            double ret_2 = 1 - (Delta[1] / (params->KALMAN_SPEED_RANGE * curSpdConfX * time));
             if (isnan(ret_2)) {
                 ret_2 = 0;
             }
@@ -708,13 +741,13 @@ void CaTChChecks::KalmanPositionSpeedScalarConsistancyCheck(veins::Coord * curPo
             if (ret_2 < 0) {
                 ret_2 = 0;
             }
-//            kalmanSC->kalmanFilterJ_SC.matrixOp_SC.printVec("Xb", kalmanSC->kalmanFilterJ_SC.X, 2);
-//            kalmanSC->kalmanFilterJ_SC.matrixOp_SC.printVec("Delta", Delta, 2);
+            //            kalmanSC->kalmanFilterJ_SC.matrixOp_SC.printVec("Xb", kalmanSC->kalmanFilterJ_SC.X, 2);
+            //            kalmanSC->kalmanFilterJ_SC.matrixOp_SC.printVec("Delta", Delta, 2);
 
             retVal[0] = ret_1;
             retVal[1] = ret_2;
-
-        } else {
+        }
+        else {
             retVal[0] = 1;
             retVal[1] = 1;
             double curspd = mdmLib.calculateSpeedPtr(curSpeed);
@@ -723,12 +756,14 @@ void CaTChChecks::KalmanPositionSpeedScalarConsistancyCheck(veins::Coord * curPo
     }
 }
 
-double CaTChChecks::KalmanPositionConsistancyCheck(veins::Coord * curPosition,
-        veins::Coord * oldPosition, veins::Coord * curPosConfidence, double time,
-        Kalman_SI * kalmanSI) {
+double CaTChChecks::KalmanPositionConsistancyCheck(veins::Coord* curPosition,
+    veins::Coord* oldPosition, veins::Coord* curPosConfidence, double time,
+    Kalman_SI* kalmanSI)
+{
     if (!kalmanSI->isInit()) {
         return 1;
-    } else {
+    }
+    else {
         if (time < params->MAX_KALMAN_TIME) {
             float Delta[2];
             double Ax = (curPosition->x - oldPosition->x) / time;
@@ -745,11 +780,9 @@ double CaTChChecks::KalmanPositionConsistancyCheck(veins::Coord * curPosition,
             }
 
             kalmanSI->getDeltaPos(time, curPosition->x, curPosition->y,
-                    curPosConfX, curPosConfY, Delta);
+                curPosConfX, curPosConfY, Delta);
 
-            double ret_1 = 1
-                    - sqrt(pow(Delta[0], 2.0) + pow(Delta[1], 2.0))
-                            / (4 * params->KALMAN_POS_RANGE * curPosConfX * time);
+            double ret_1 = 1 - sqrt(pow(Delta[0], 2.0) + pow(Delta[1], 2.0)) / (4 * params->KALMAN_POS_RANGE * curPosConfX * time);
             if (isnan(ret_1)) {
                 ret_1 = 0;
             }
@@ -762,19 +795,22 @@ double CaTChChecks::KalmanPositionConsistancyCheck(veins::Coord * curPosition,
             }
 
             return ret_1;
-        } else {
+        }
+        else {
             kalmanSI->setInitial(curPosition->x, curPosition->y);
             return 1;
         }
     }
 }
 
-double CaTChChecks::KalmanPositionAccConsistancyCheck(veins::Coord * curPosition,
-        veins::Coord * curSpeed, veins::Coord * curPosConfidence, double time,
-        Kalman_SI * kalmanSI) {
+double CaTChChecks::KalmanPositionAccConsistancyCheck(veins::Coord* curPosition,
+    veins::Coord* curSpeed, veins::Coord* curPosConfidence, double time,
+    Kalman_SI* kalmanSI)
+{
     if (!kalmanSI->isInit()) {
         return 1;
-    } else {
+    }
+    else {
         if (time < params->MAX_KALMAN_TIME) {
             float Delta[2];
             double Ax = curSpeed->x;
@@ -791,11 +827,9 @@ double CaTChChecks::KalmanPositionAccConsistancyCheck(veins::Coord * curPosition
             }
 
             kalmanSI->getDeltaPos(time, curPosition->x, curPosition->y, Ax, Ay,
-                    curPosConfX, curPosConfY, Delta);
+                curPosConfX, curPosConfY, Delta);
 
-            double ret_1 = 1
-                    - sqrt(pow(Delta[0], 2.0) + pow(Delta[1], 2.0))
-                            / (4 * params->KALMAN_POS_RANGE * curPosConfX * time);
+            double ret_1 = 1 - sqrt(pow(Delta[0], 2.0) + pow(Delta[1], 2.0)) / (4 * params->KALMAN_POS_RANGE * curPosConfX * time);
             if (isnan(ret_1)) {
                 ret_1 = 0;
             }
@@ -808,18 +842,21 @@ double CaTChChecks::KalmanPositionAccConsistancyCheck(veins::Coord * curPosition
             }
 
             return ret_1;
-        } else {
+        }
+        else {
             kalmanSI->setInitial(curPosition->x, curPosition->y);
             return 1;
         }
     }
 }
-double CaTChChecks::KalmanSpeedConsistancyCheck(veins::Coord * curSpeed,
-        veins::Coord *curAccel, veins::Coord * curSpeedConfidence, double time,
-        Kalman_SI * kalmanSI) {
+double CaTChChecks::KalmanSpeedConsistancyCheck(veins::Coord* curSpeed,
+    veins::Coord* curAccel, veins::Coord* curSpeedConfidence, double time,
+    Kalman_SI* kalmanSI)
+{
     if (!kalmanSI->isInit()) {
         return 1;
-    } else {
+    }
+    else {
         if (time < params->MAX_KALMAN_TIME) {
             float Delta[2];
             double curSpdConfX = curSpeedConfidence->x;
@@ -833,11 +870,9 @@ double CaTChChecks::KalmanSpeedConsistancyCheck(veins::Coord * curSpeed,
             }
 
             kalmanSI->getDeltaPos(time, curSpeed->x, curSpeed->y, curAccel->x,
-                    curAccel->y, curSpdConfX, curSpdConfY, Delta);
+                curAccel->y, curSpdConfX, curSpdConfY, Delta);
 
-            double ret_1 = 1
-                    - sqrt(pow(Delta[0], 2.0) + pow(Delta[1], 2.0))
-                            / (params->KALMAN_SPEED_RANGE * curSpdConfX * time);
+            double ret_1 = 1 - sqrt(pow(Delta[0], 2.0) + pow(Delta[1], 2.0)) / (params->KALMAN_SPEED_RANGE * curSpdConfX * time);
             if (isnan(ret_1)) {
                 ret_1 = 0;
             }
@@ -849,335 +884,361 @@ double CaTChChecks::KalmanSpeedConsistancyCheck(veins::Coord * curSpeed,
             }
 
             return ret_1;
-        } else {
+        }
+        else {
             kalmanSI->setInitial(curSpeed->x, curSpeed->y);
             return 1;
         }
     }
 }
 
-BsmCheck CaTChChecks::CheckBSM(BasicSafetyMessage * bsm,
-        NodeTable * detectedNodes) {
+BsmCheck CaTChChecks::CheckBSM(BasicSafetyMessage* bsm,
+    NodeTable* detectedNodes)
+{
     BsmCheck bsmCheck = BsmCheck();
 
     unsigned long senderPseudonym = bsm->getSenderPseudonym();
     veins::Coord senderPos = bsm->getSenderPos();
     veins::Coord senderPosConfidence = bsm->getSenderPosConfidence();
-    NodeHistory * senderNode;
-    MDMHistory * senderMDM;
+    NodeHistory* senderNode;
+    MDMHistory* senderMDM;
     NodeHistory nullNode = NodeHistory();
     MDMHistory nullMDMNode = MDMHistory();
-    if(detectedNodes->includes(senderPseudonym)){
+    if (detectedNodes->includes(senderPseudonym)) {
         senderNode = detectedNodes->getNodeHistoryAddr(
-                senderPseudonym);
+            senderPseudonym);
         senderMDM = detectedNodes->getMDMHistoryAddr(senderPseudonym);
-    }else{
+    }
+    else {
         senderNode = &nullNode;
         senderMDM = &nullMDMNode;
     }
 
+    bsmCheck.setProximityPlausibility(ProximityPlausibilityCheck(&bsm->getSenderPos(), &myPosition, &myHeading));
+
     bsmCheck.setRangePlausibility(
-            RangePlausibilityCheck(&myPosition, &myPositionConfidence,
-                    &senderPos, &senderPosConfidence));
+        RangePlausibilityCheck(&myPosition, &myPositionConfidence,
+            &senderPos, &senderPosConfidence));
 
     bsmCheck.setSpeedPlausibility(
-            SpeedPlausibilityCheck(
-                    mdmLib.calculateSpeedPtr(&bsm->getSenderSpeed()),
-                    mdmLib.calculateSpeedPtr(
-                            &bsm->getSenderSpeedConfidence())));
+        SpeedPlausibilityCheck(
+            mdmLib.calculateSpeedPtr(&bsm->getSenderSpeed()),
+            mdmLib.calculateSpeedPtr(
+                &bsm->getSenderSpeedConfidence())));
 
     bsmCheck.setIntersection(MultipleIntersectionCheck(detectedNodes, bsm));
 
     bsmCheck.setPositionPlausibility(
-            PositionPlausibilityCheck(&senderPos, &senderPosConfidence,
-                    mdmLib.calculateSpeedPtr(&bsm->getSenderSpeed()),
-                    mdmLib.calculateSpeedPtr(
-                            &bsm->getSenderSpeedConfidence())));
+        PositionPlausibilityCheck(&senderPos, &senderPosConfidence,
+            mdmLib.calculateSpeedPtr(&bsm->getSenderSpeed()),
+            mdmLib.calculateSpeedPtr(
+                &bsm->getSenderSpeedConfidence())));
 
     if (senderNode->getBSMNum() > 0) {
         bsmCheck.setPositionConsistancy(
-                PositionConsistancyCheck(&senderPos, &senderPosConfidence,
-                        &senderNode->getLatestBSMAddr()->getSenderPos(),
-                        &senderNode->getLatestBSMAddr()->getSenderPosConfidence(),
-                        mdmLib.calculateDeltaTime(bsm,
-                                senderNode->getLatestBSMAddr())));
+            PositionConsistancyCheck(&senderPos, &senderPosConfidence,
+                &senderNode->getLatestBSMAddr()->getSenderPos(),
+                &senderNode->getLatestBSMAddr()->getSenderPosConfidence(),
+                mdmLib.calculateDeltaTime(bsm,
+                    senderNode->getLatestBSMAddr())));
 
         bsmCheck.setSpeedConsistancy(
-                SpeedConsistancyCheck(
-                        mdmLib.calculateSpeedPtr(&bsm->getSenderSpeed()),
-                        mdmLib.calculateSpeedPtr(
-                                &bsm->getSenderSpeedConfidence()),
-                        mdmLib.calculateSpeedPtr(
-                                &senderNode->getLatestBSMAddr()->getSenderSpeed()),
-                        mdmLib.calculateSpeedPtr(
-                                &senderNode->getLatestBSMAddr()->getSenderSpeedConfidence()),
-                        mdmLib.calculateDeltaTime(bsm,
-                                senderNode->getLatestBSMAddr())));
+            SpeedConsistancyCheck(
+                mdmLib.calculateSpeedPtr(&bsm->getSenderSpeed()),
+                mdmLib.calculateSpeedPtr(
+                    &bsm->getSenderSpeedConfidence()),
+                mdmLib.calculateSpeedPtr(
+                    &senderNode->getLatestBSMAddr()->getSenderSpeed()),
+                mdmLib.calculateSpeedPtr(
+                    &senderNode->getLatestBSMAddr()->getSenderSpeedConfidence()),
+                mdmLib.calculateDeltaTime(bsm,
+                    senderNode->getLatestBSMAddr())));
 
         bsmCheck.setBeaconFrequency(
-                BeaconFrequencyCheck(bsm->getArrivalTime().dbl(),
-                        senderNode->getLatestBSMAddr()->getArrivalTime().dbl()));
+            BeaconFrequencyCheck(bsm->getArrivalTime().dbl(),
+                senderNode->getLatestBSMAddr()->getArrivalTime().dbl()));
 
         bsmCheck.setPositionHeadingConsistancy(
-                PositionHeadingConsistancyCheck(&bsm->getSenderHeading(),
-                        &bsm->getSenderHeadingConfidence(),
-                        &senderNode->getLatestBSMAddr()->getSenderPos(),
-                        &senderNode->getLatestBSMAddr()->getSenderPosConfidence(),
-                        &bsm->getSenderPos(), &bsm->getSenderPosConfidence(),
-                        mdmLib.calculateDeltaTime(bsm,
-                                senderNode->getLatestBSMAddr()),
-                        mdmLib.calculateSpeedPtr(&bsm->getSenderSpeed()),
-                        mdmLib.calculateSpeedPtr(
-                                &bsm->getSenderSpeedConfidence())));
+            PositionHeadingConsistancyCheck(&bsm->getSenderHeading(),
+                &bsm->getSenderHeadingConfidence(),
+                &senderNode->getLatestBSMAddr()->getSenderPos(),
+                &senderNode->getLatestBSMAddr()->getSenderPosConfidence(),
+                &bsm->getSenderPos(), &bsm->getSenderPosConfidence(),
+                mdmLib.calculateDeltaTime(bsm,
+                    senderNode->getLatestBSMAddr()),
+                mdmLib.calculateSpeedPtr(&bsm->getSenderSpeed()),
+                mdmLib.calculateSpeedPtr(
+                    &bsm->getSenderSpeedConfidence())));
 
         bsmCheck.setPositionSpeedConsistancy(
-                PositionSpeedConsistancyCheck(&senderPos, &senderPosConfidence,
-                        &senderNode->getLatestBSMAddr()->getSenderPos(),
-                        &senderNode->getLatestBSMAddr()->getSenderPosConfidence(),
-                        mdmLib.calculateSpeedPtr(&bsm->getSenderSpeed()),
-                        mdmLib.calculateSpeedPtr(
-                                &bsm->getSenderSpeedConfidence()),
-                        mdmLib.calculateSpeedPtr(
-                                &senderNode->getLatestBSMAddr()->getSenderSpeed()),
-                        mdmLib.calculateSpeedPtr(
-                                &senderNode->getLatestBSMAddr()->getSenderSpeedConfidence()),
-                        mdmLib.calculateDeltaTime(bsm,
-                                senderNode->getLatestBSMAddr())));
+            PositionSpeedConsistancyCheck(&senderPos, &senderPosConfidence,
+                &senderNode->getLatestBSMAddr()->getSenderPos(),
+                &senderNode->getLatestBSMAddr()->getSenderPosConfidence(),
+                mdmLib.calculateSpeedPtr(&bsm->getSenderSpeed()),
+                mdmLib.calculateSpeedPtr(
+                    &bsm->getSenderSpeedConfidence()),
+                mdmLib.calculateSpeedPtr(
+                    &senderNode->getLatestBSMAddr()->getSenderSpeed()),
+                mdmLib.calculateSpeedPtr(
+                    &senderNode->getLatestBSMAddr()->getSenderSpeedConfidence()),
+                mdmLib.calculateDeltaTime(bsm,
+                    senderNode->getLatestBSMAddr())));
 
         bsmCheck.setPositionSpeedMaxConsistancy(
-                PositionSpeedMaxConsistancyCheck(&senderPos,
-                        &senderPosConfidence,
-                        &senderNode->getLatestBSMAddr()->getSenderPos(),
-                        &senderNode->getLatestBSMAddr()->getSenderPosConfidence(),
-                        mdmLib.calculateSpeedPtr(&bsm->getSenderSpeed()),
-                        mdmLib.calculateSpeedPtr(
-                                &bsm->getSenderSpeedConfidence()),
-                        mdmLib.calculateSpeedPtr(
-                                &senderNode->getLatestBSMAddr()->getSenderSpeed()),
-                        mdmLib.calculateSpeedPtr(
-                                &senderNode->getLatestBSMAddr()->getSenderSpeedConfidence()),
-                        mdmLib.calculateDeltaTime(bsm,
-                                senderNode->getLatestBSMAddr())));
+            PositionSpeedMaxConsistancyCheck(&senderPos,
+                &senderPosConfidence,
+                &senderNode->getLatestBSMAddr()->getSenderPos(),
+                &senderNode->getLatestBSMAddr()->getSenderPosConfidence(),
+                mdmLib.calculateSpeedPtr(&bsm->getSenderSpeed()),
+                mdmLib.calculateSpeedPtr(
+                    &bsm->getSenderSpeedConfidence()),
+                mdmLib.calculateSpeedPtr(
+                    &senderNode->getLatestBSMAddr()->getSenderSpeed()),
+                mdmLib.calculateSpeedPtr(
+                    &senderNode->getLatestBSMAddr()->getSenderSpeedConfidence()),
+                mdmLib.calculateDeltaTime(bsm,
+                    senderNode->getLatestBSMAddr())));
 
         if (mdmLib.calculateDeltaTime(bsm,
-                senderNode->getLatestBSMAddr())> params->MAX_SA_TIME) {
+                senderNode->getLatestBSMAddr()) > params->MAX_SA_TIME) {
             bsmCheck.setSuddenAppearence(
-                    SuddenAppearenceCheck(&senderPos, &senderPosConfidence,
-                            &myPosition, &myPositionConfidence));
+                SuddenAppearenceCheck(&senderPos, &senderPosConfidence,
+                    &myPosition, &myPositionConfidence));
         }
 
         double retVal[2];
         double retValSC[2];
 
-        Kalman_SVI * kalmanSVI;
+        Kalman_SVI* kalmanSVI;
         if (version == 2) {
             kalmanSVI = senderMDM->getKalmanSviv2();
-        } else {
+        }
+        else {
             kalmanSVI = senderMDM->getKalmanSviv1();
         }
 
-        Kalman_SI * kalmanSI;
+        Kalman_SI* kalmanSI;
         if (version == 2) {
             kalmanSI = senderMDM->getKalmanSiv2();
-        } else {
+        }
+        else {
             kalmanSI = senderMDM->getKalmanSiv1();
         }
 
-        Kalman_SC * kalmanSC;
+        Kalman_SC* kalmanSC;
         if (version == 2) {
             kalmanSC = senderMDM->getKalmanSvsiv2();
-        } else {
+        }
+        else {
             kalmanSC = senderMDM->getKalmanSvsiv1();
         }
 
-        Kalman_SI * kalmanSAI;
+        Kalman_SI* kalmanSAI;
         if (version == 2) {
             kalmanSAI = senderMDM->getKalmanSaiv2();
-        } else {
+        }
+        else {
             kalmanSAI = senderMDM->getKalmanSaiv1();
         }
 
-        Kalman_SI * kalmanVI;
+        Kalman_SI* kalmanVI;
         if (version == 2) {
             kalmanVI = senderMDM->getKalmanViv2();
-        } else {
+        }
+        else {
             kalmanVI = senderMDM->getKalmanViv1();
         }
 
         KalmanPositionSpeedConsistancyCheck(&senderPos, &senderPosConfidence,
-                &bsm->getSenderSpeed(), &bsm->getSenderAccel(),
-                &bsm->getSenderSpeedConfidence(),
-                mdmLib.calculateDeltaTime(bsm, senderNode->getLatestBSMAddr()),
-                kalmanSVI, retVal);
+            &bsm->getSenderSpeed(), &bsm->getSenderAccel(),
+            &bsm->getSenderSpeedConfidence(),
+            mdmLib.calculateDeltaTime(bsm, senderNode->getLatestBSMAddr()),
+            kalmanSVI, retVal);
         bsmCheck.setKalmanPSCP(retVal[0]);
         bsmCheck.setKalmanPSCS(retVal[1]);
 
         KalmanPositionSpeedScalarConsistancyCheck(&senderPos,
-                &senderNode->getLatestBSMAddr()->getSenderPos(),
-                &senderPosConfidence, &bsm->getSenderSpeed(),
-                &bsm->getSenderAccel(), &bsm->getSenderSpeedConfidence(),
-                mdmLib.calculateDeltaTime(bsm, senderNode->getLatestBSMAddr()),
-                kalmanSC, retValSC);
+            &senderNode->getLatestBSMAddr()->getSenderPos(),
+            &senderPosConfidence, &bsm->getSenderSpeed(),
+            &bsm->getSenderAccel(), &bsm->getSenderSpeedConfidence(),
+            mdmLib.calculateDeltaTime(bsm, senderNode->getLatestBSMAddr()),
+            kalmanSC, retValSC);
 
         bsmCheck.setKalmanPSCSP(retValSC[0]);
         bsmCheck.setKalmanPSCSS(retValSC[1]);
 
         bsmCheck.setKalmanPCC(
-                KalmanPositionConsistancyCheck(&senderPos,
-                        &senderNode->getLatestBSMAddr()->getSenderPos(),
-                        &senderPosConfidence,
-                        mdmLib.calculateDeltaTime(bsm,
-                                senderNode->getLatestBSMAddr()), kalmanSI));
+            KalmanPositionConsistancyCheck(&senderPos,
+                &senderNode->getLatestBSMAddr()->getSenderPos(),
+                &senderPosConfidence,
+                mdmLib.calculateDeltaTime(bsm,
+                    senderNode->getLatestBSMAddr()),
+                kalmanSI));
 
         bsmCheck.setKalmanPACS(
-                KalmanPositionAccConsistancyCheck(&senderPos,
-                        &senderNode->getLatestBSMAddr()->getSenderSpeed(),
-                        &senderPosConfidence,
-                        mdmLib.calculateDeltaTime(bsm,
-                                senderNode->getLatestBSMAddr()), kalmanSI));
+            KalmanPositionAccConsistancyCheck(&senderPos,
+                &senderNode->getLatestBSMAddr()->getSenderSpeed(),
+                &senderPosConfidence,
+                mdmLib.calculateDeltaTime(bsm,
+                    senderNode->getLatestBSMAddr()),
+                kalmanSI));
 
         bsmCheck.setKalmanSCC(
-                KalmanSpeedConsistancyCheck(&bsm->getSenderSpeed(),
-                        &bsm->getSenderAccel(),
-                        &bsm->getSenderSpeedConfidence(),
-                        mdmLib.calculateDeltaTime(bsm,
-                                senderNode->getLatestBSMAddr()), kalmanVI));
-
-    } else {
-        bsmCheck.setSuddenAppearence(
-                SuddenAppearenceCheck(&senderPos, &senderPosConfidence,
-                        &myPosition, &myPositionConfidence));
+            KalmanSpeedConsistancyCheck(&bsm->getSenderSpeed(),
+                &bsm->getSenderAccel(),
+                &bsm->getSenderSpeedConfidence(),
+                mdmLib.calculateDeltaTime(bsm,
+                    senderNode->getLatestBSMAddr()),
+                kalmanVI));
     }
-//    std::cout << "======================================="<<"\n";
-//    std::cout << "max_f1 => " << max_f1 << '\n';
-//    std::cout << "max_f2 => " << max_f2 << '\n';
-//    std::cout << "max_f3 => " << max_f3 << '\n';
-//    std::cout << "max_f4 => " << max_f4 << '\n';
-//    std::cout << "max_f5 => " << max_f5 << '\n';
-//    std::cout << "max_f6 => " << max_f6 << '\n';
-//    std::cout << "max_f7 => " << max_f7 << '\n';
+    else {
+        bsmCheck.setSuddenAppearence(
+            SuddenAppearenceCheck(&senderPos, &senderPosConfidence,
+                &myPosition, &myPositionConfidence));
+    }
+    //    std::cout << "======================================="<<"\n";
+    //    std::cout << "max_f1 => " << max_f1 << '\n';
+    //    std::cout << "max_f2 => " << max_f2 << '\n';
+    //    std::cout << "max_f3 => " << max_f3 << '\n';
+    //    std::cout << "max_f4 => " << max_f4 << '\n';
+    //    std::cout << "max_f5 => " << max_f5 << '\n';
+    //    std::cout << "max_f6 => " << max_f6 << '\n';
+    //    std::cout << "max_f7 => " << max_f7 << '\n';
 
-//    if(bsm->getSenderMbType() == 1){
-//    PrintBsmCheck(senderPseudonym, bsmCheck);
-//    }
+    //    if(bsm->getSenderMbType() == 1){
+    //    PrintBsmCheck(senderPseudonym, bsmCheck);
+    //    }
     return bsmCheck;
 }
 
 void CaTChChecks::PrintBsmCheck(unsigned long senderPseudonym,
-        BsmCheck bsmCheck) {
+    BsmCheck bsmCheck)
+{
 
     double assignedThre = 0.5;
 
-    if (bsmCheck.getRangePlausibility() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "ART FAILED => "
-                << bsmCheck.getRangePlausibility() << " A:" << myPseudonym
-                << " B:" << senderPseudonym << '\n';
+    if (bsmCheck.getProximityPlausibility() < assignedThre) {
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "RAD FAILED => "
+                  << bsmCheck.getProximityPlausibility() << " A:" << myPseudonym
+                  << " B:" << senderPseudonym << '\n';
+    }
 
+    if (bsmCheck.getRangePlausibility() < assignedThre) {
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "ART FAILED => "
+                  << bsmCheck.getRangePlausibility() << " A:" << myPseudonym
+                  << " B:" << senderPseudonym << '\n';
     }
     if (bsmCheck.getPositionConsistancy() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "MGTD FAILED => "
-                << bsmCheck.getPositionConsistancy() << " A:" << myPseudonym
-                << " B:" << senderPseudonym << '\n';
-
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "MGTD FAILED => "
+                  << bsmCheck.getPositionConsistancy() << " A:" << myPseudonym
+                  << " B:" << senderPseudonym << '\n';
     }
     if (bsmCheck.getSpeedConsistancy() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "MGTS FAILED => "
-                << bsmCheck.getSpeedConsistancy() << " A:" << myPseudonym
-                << " B:" << senderPseudonym << '\n';
-
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "MGTS FAILED => "
+                  << bsmCheck.getSpeedConsistancy() << " A:" << myPseudonym
+                  << " B:" << senderPseudonym << '\n';
     }
 
     if (bsmCheck.getPositionSpeedConsistancy() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "MGTSV FAILED => "
-                << bsmCheck.getPositionSpeedConsistancy() << " A:"
-                << myPseudonym << " B:" << senderPseudonym << '\n';
-
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "MGTSV FAILED => "
+                  << bsmCheck.getPositionSpeedConsistancy() << " A:"
+                  << myPseudonym << " B:" << senderPseudonym << '\n';
     }
 
     if (bsmCheck.getPositionSpeedMaxConsistancy() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "MGTSVM FAILED => "
-                << bsmCheck.getPositionSpeedMaxConsistancy() << " A:"
-                << myPseudonym << " B:" << senderPseudonym << '\n';
-
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "MGTSVM FAILED => "
+                  << bsmCheck.getPositionSpeedMaxConsistancy() << " A:"
+                  << myPseudonym << " B:" << senderPseudonym << '\n';
     }
 
     if (bsmCheck.getSpeedPlausibility() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "MAXS FAILED => "
-                << bsmCheck.getSpeedPlausibility() << " A:" << myPseudonym
-                << " B:" << senderPseudonym << '\n';
-
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "MAXS FAILED => "
+                  << bsmCheck.getSpeedPlausibility() << " A:" << myPseudonym
+                  << " B:" << senderPseudonym << '\n';
     }
     if (bsmCheck.getPositionPlausibility() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "MAP FAILED => "
-                << bsmCheck.getPositionPlausibility() << " A:" << myPseudonym
-                << " B:" << senderPseudonym << '\n';
-
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "MAP FAILED => "
+                  << bsmCheck.getPositionPlausibility() << " A:" << myPseudonym
+                  << " B:" << senderPseudonym << '\n';
     }
 
-//    if (bsmCheck.getSuddenAppearence() < assignedThre) {
-//        std::cout << "^^^^^^^^^^^V2 " << "SAW FAILED => "
-//                << bsmCheck.getSuddenAppearence() << " A:" << myPseudonym
-//                << " B:" << senderPseudonym << '\n';
-//    }
+    //    if (bsmCheck.getSuddenAppearence() < assignedThre) {
+    //        std::cout << "^^^^^^^^^^^V2 " << "SAW FAILED => "
+    //                << bsmCheck.getSuddenAppearence() << " A:" << myPseudonym
+    //                << " B:" << senderPseudonym << '\n';
+    //    }
 
     if (bsmCheck.getPositionHeadingConsistancy() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "PHC FAILED => "
-                << bsmCheck.getPositionHeadingConsistancy() << " A:"
-                << myPseudonym << " B:" << senderPseudonym << '\n';
-
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "PHC FAILED => "
+                  << bsmCheck.getPositionHeadingConsistancy() << " A:"
+                  << myPseudonym << " B:" << senderPseudonym << '\n';
     }
 
     if (bsmCheck.getBeaconFrequency() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "FREQ FAILED => "
-                << bsmCheck.getBeaconFrequency() << " A:" << myPseudonym
-                << " B:" << senderPseudonym << '\n';
-
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "FREQ FAILED => "
+                  << bsmCheck.getBeaconFrequency() << " A:" << myPseudonym
+                  << " B:" << senderPseudonym << '\n';
     }
     if (bsmCheck.getKalmanSCC() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "KalmanSCC FAILED => "
-                << bsmCheck.getKalmanSCC() << " A:" << myPseudonym << " B:"
-                << senderPseudonym << '\n';
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "KalmanSCC FAILED => "
+                  << bsmCheck.getKalmanSCC() << " A:" << myPseudonym << " B:"
+                  << senderPseudonym << '\n';
     }
     if (bsmCheck.getKalmanSCC() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "KalmanPACS FAILED => "
-                << bsmCheck.getKalmanSCC() << " A:" << myPseudonym << " B:"
-                << senderPseudonym << '\n';
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "KalmanPACS FAILED => "
+                  << bsmCheck.getKalmanSCC() << " A:" << myPseudonym << " B:"
+                  << senderPseudonym << '\n';
     }
     if (bsmCheck.getKalmanPCC() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "KalmanPCC FAILED => "
-                << bsmCheck.getKalmanPCC() << " A:" << myPseudonym << " B:"
-                << senderPseudonym << '\n';
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "KalmanPCC FAILED => "
+                  << bsmCheck.getKalmanPCC() << " A:" << myPseudonym << " B:"
+                  << senderPseudonym << '\n';
     }
     if (bsmCheck.getKalmanPSCP() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "KalmanPSCP FAILED => "
-                << bsmCheck.getKalmanPSCP() << " A:" << myPseudonym << " B:"
-                << senderPseudonym << '\n';
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "KalmanPSCP FAILED => "
+                  << bsmCheck.getKalmanPSCP() << " A:" << myPseudonym << " B:"
+                  << senderPseudonym << '\n';
     }
     if (bsmCheck.getKalmanPSCS() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "KalmanPSCS FAILED => "
-                << bsmCheck.getKalmanPSCS() << " A:" << myPseudonym << " B:"
-                << senderPseudonym << '\n';
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "KalmanPSCS FAILED => "
+                  << bsmCheck.getKalmanPSCS() << " A:" << myPseudonym << " B:"
+                  << senderPseudonym << '\n';
     }
     if (bsmCheck.getKalmanPSCSP() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "KalmanPSCSP FAILED => "
-                << bsmCheck.getKalmanPSCSP() << " A:" << myPseudonym << " B:"
-                << senderPseudonym << '\n';
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "KalmanPSCSP FAILED => "
+                  << bsmCheck.getKalmanPSCSP() << " A:" << myPseudonym << " B:"
+                  << senderPseudonym << '\n';
     }
     if (bsmCheck.getKalmanPSCSP() < assignedThre) {
-        std::cout << "^^^^^^^^^^^V2 " << "KalmanPSCSS FAILED => "
-                << bsmCheck.getKalmanPSCSP() << " A:" << myPseudonym << " B:"
-                << senderPseudonym << '\n';
+        std::cout << "^^^^^^^^^^^V2 "
+                  << "KalmanPSCSS FAILED => "
+                  << bsmCheck.getKalmanPSCSP() << " A:" << myPseudonym << " B:"
+                  << senderPseudonym << '\n';
     }
     InterTest inter = bsmCheck.getIntersection();
     for (int var = 0; var < inter.getInterNum(); ++var) {
         if (inter.getInterValue(var) < assignedThre) {
-            std::cout << "^^^^^^^^^^^V2 " << "INT FAILED => "
-                    << inter.getInterValue(var) << " A:" << myPseudonym << " B:"
-                    << senderPseudonym << " C:" << inter.getInterId(var)
-                    << '\n';
-
+            std::cout << "^^^^^^^^^^^V2 "
+                      << "INT FAILED => "
+                      << inter.getInterValue(var) << " A:" << myPseudonym << " B:"
+                      << senderPseudonym << " C:" << inter.getInterId(var)
+                      << '\n';
         }
     }
-
 }
-

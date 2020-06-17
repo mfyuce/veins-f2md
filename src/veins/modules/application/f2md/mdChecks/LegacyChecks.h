@@ -22,6 +22,7 @@
 #include "../mdSupport/MDMLib.h"
 #include "veins/modules/obstacle/ObstacleControl.h"
 #include "veins/modules/obstacle/Obstacle.h"
+#include <unordered_map>
 
 using namespace veins;
 using namespace omnetpp;
@@ -44,7 +45,13 @@ private:
 
     LinkControl* LinkC;
 
+    LAddress::L2Type myId;
+
     F2MDParameters * params;
+
+    std::unordered_map<LAddress::L2Type,veins::Coord> *realDynamicMap;
+
+    double ProximityPlausibilityCheck(veins::Coord*testPosition, veins::Coord*myPosition, veins::Coord* myHeading);
 
     double RangePlausibilityCheck(veins::Coord*, veins::Coord*);
     double PositionConsistancyCheck(veins::Coord*, veins::Coord*, double);
@@ -91,7 +98,7 @@ private:
 public:
 
     LegacyChecks(int version, unsigned long myPseudonym, veins::Coord myPosition, veins::Coord mySpeed,
-            veins::Coord myHeading, veins::Coord mySize, veins::Coord myLimits, LinkControl* LinkC, F2MDParameters * params);
+            veins::Coord myHeading, veins::Coord mySize, veins::Coord myLimits, LinkControl* LinkC, std::unordered_map<LAddress::L2Type,veins::Coord> *realDynamicMap, LAddress::L2Type myId, F2MDParameters * params);
     BsmCheck CheckBSM(BasicSafetyMessage * bsm, NodeTable * detectedNodes);
 
 };

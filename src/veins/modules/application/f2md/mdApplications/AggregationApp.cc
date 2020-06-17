@@ -65,13 +65,22 @@ bool AggrigationApp::CheckNodeForReport(unsigned long myPseudonym,
 
     double factorList[bsmCheckListSize];
 
+    //std::cout<< "ProximityPlausibility" << '\n';
+    for (int var = 0; var < bsmCheckListSize; ++var) {
+        factorList[var] = bsmCheckList[var].getProximityPlausibility();
+    }
+    tempFactor = AggregateFactorsListDouble(bsmCheck->getProximityPlausibility(),
+            factorList, bsmCheckListSize);
+    if (tempFactor < Threshold) {
+        checkFailed = true;
+    }
+
     //std::cout<< "RangePlausibility" << '\n';
     for (int var = 0; var < bsmCheckListSize; ++var) {
         factorList[var] = bsmCheckList[var].getRangePlausibility();
     }
     tempFactor = AggregateFactorsListDouble(bsmCheck->getRangePlausibility(),
             factorList, bsmCheckListSize);
-
     if (tempFactor < Threshold) {
         checkFailed = true;
     }

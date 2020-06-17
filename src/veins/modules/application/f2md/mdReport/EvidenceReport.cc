@@ -32,9 +32,20 @@ void EvidenceReport::addEvidence(BasicSafetyMessage myBsm,
     bool myBsmAdded = false;
     setReportedCheck(reportedCheck);
 
-    if (reportedCheck.getRangePlausibility() < 1) {
+
+    if (reportedCheck.getProximityPlausibility() < 1) {
         addBsmToList(myBsm);
         myBsmAdded=true;
+        if (eviNum < 1) {
+            eviNum = 1;
+        }
+    }
+
+    if (reportedCheck.getRangePlausibility() < 1) {
+        if(!myBsmAdded){
+            addBsmToList(myBsm);
+            myBsmAdded=true;
+        }
         if (eviNum < 1) {
             eviNum = 1;
         }

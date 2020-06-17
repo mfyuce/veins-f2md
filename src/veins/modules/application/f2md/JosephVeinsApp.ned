@@ -96,11 +96,15 @@ simple JosephVeinsApp extends F2MDBaseApplLayer
     bool enableVarThreV2 = default(false);
 
     // ------ Detection Parameters -- Start 
+    double MAX_PROXIMITY_RANGE_L = default(30);
+    double MAX_PROXIMITY_RANGE_W = default(3);
+    double MAX_PROXIMITY_DISTANCE = default(2);
+
     double MAX_CONFIDENCE_RANGE = default(10);
     double MAX_PLAUSIBLE_RANGE = default(420);
    	double MAX_TIME_DELTA = default(3.1);
 	double MAX_DELTA_INTER = default(2.0);
-	double MAX_SA_RANGE = default(210);
+	double MAX_SA_RANGE = default(420);
 	double MAX_SA_TIME = default(2.1);
 	double MAX_KALMAN_TIME = default(3.1);
 	double KALMAN_POS_RANGE = default(1.0);

@@ -30,6 +30,7 @@
 
 #include "../mdSupport/kalmanLib/Kalman_SVI.h"
 #include "../mdSupport/kalmanLib/Kalman_SI.h"
+#include <unordered_map>
 
 
 using namespace veins;
@@ -47,14 +48,20 @@ private:
 
     veins::Coord mySize;
 
+    LAddress::L2Type myId;
+
     MDMLib mdmLib;
 
     LinkControl* LinkC;
+
+    std::unordered_map<LAddress::L2Type,veins::Coord> *realDynamicMap;
 
     double MAX_PLAUSIBLE_SPEED = 0;
     double MAX_PLAUSIBLE_ACCEL = 0;
     double MAX_PLAUSIBLE_DECEL = 0;
     F2MDParameters * params;
+
+    double ProximityPlausibilityCheck(veins::Coord*testPosition, veins::Coord*myPosition, veins::Coord* myHeading);
 
     double RangePlausibilityCheck(veins::Coord*, veins::Coord*, veins::Coord*, veins::Coord*);
     double PositionPlausibilityCheck(veins::Coord*, veins::Coord*, double, double);
@@ -119,7 +126,7 @@ public:
     ExperiChecks(int version, unsigned long myPseudonym, veins::Coord myPosition,
             veins::Coord myPositionConfidence, veins::Coord myHeading,
             veins::Coord myHeadingConfidence, veins::Coord mySize, veins::Coord myLimits,
-            LinkControl* LinkC,F2MDParameters * params);
+            LinkControl* LinkC,std::unordered_map<LAddress::L2Type,veins::Coord> *realDynamicMap, LAddress::L2Type myId, F2MDParameters * params);
     BsmCheck CheckBSM(BasicSafetyMessage * bsm, NodeTable * detectedNodes);
 
 };

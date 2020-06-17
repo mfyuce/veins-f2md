@@ -20,6 +20,8 @@ using namespace omnetpp;
 class BsmCheck {
 
 private:
+    double proximityPlausibility;
+
     double rangePlausibility;
     double speedConsistancy;
     double positionConsistancy;
@@ -45,6 +47,8 @@ private:
 public:
     BsmCheck();
 
+    double getProximityPlausibility();
+
     double getRangePlausibility();
     double getPositionPlausibility();
     double getSpeedPlausibility();
@@ -58,6 +62,8 @@ public:
     double getPositionHeadingConsistancy();
 
     bool getReported();
+
+    void setProximityPlausibility(double);
 
     void setRangePlausibility(double);
     void setPositionPlausibility(double);

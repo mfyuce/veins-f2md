@@ -12,6 +12,7 @@
 #include <veins/modules/application/f2md/mdBase/BsmCheck.h>
 
 BsmCheck::BsmCheck() {
+     proximityPlausibility = 1;
      rangePlausibility = 1;
      speedConsistancy = 1;
      positionConsistancy = 1;
@@ -32,6 +33,10 @@ BsmCheck::BsmCheck() {
      kalmanSCC=1;
 
      reported = false;
+}
+
+double BsmCheck::getProximityPlausibility() {
+    return proximityPlausibility;
 }
 
 double BsmCheck::getRangePlausibility() {
@@ -80,6 +85,10 @@ double BsmCheck::getPositionHeadingConsistancy() {
 
 bool BsmCheck::getReported() {
     return reported;
+}
+
+void BsmCheck::setProximityPlausibility(double proximityPlausibility) {
+    this->proximityPlausibility = proximityPlausibility;
 }
 
 void BsmCheck::setRangePlausibility(double rangePlausibility) {

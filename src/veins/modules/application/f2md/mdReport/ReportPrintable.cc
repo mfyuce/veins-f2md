@@ -19,6 +19,10 @@ std::string ReportPrintable::getCheckXml(BsmCheck Check){
     xml.init();
     xml.writeOpenTag("BsmCheck");
 
+     xml.writeStartElementTag("rpP");
+     xml.writeString(std::to_string(Check.getProximityPlausibility()));
+     xml.writeEndElementTag();
+
      xml.writeStartElementTag("rP");
      xml.writeString(std::to_string(Check.getRangePlausibility()));
      xml.writeEndElementTag();
@@ -253,6 +257,9 @@ std::string ReportPrintable::getCheckJson(BsmCheck Check){
 
     jw.openJsonElement("BsmCheck",false);
 
+    tempStr = jw.getSimpleTag("rpP", std::to_string(Check.getProximityPlausibility()),true);
+    jw.addTagToElement("BsmCheck", tempStr);
+
     tempStr = jw.getSimpleTag("rP", std::to_string(Check.getRangePlausibility()),true);
     jw.addTagToElement("BsmCheck", tempStr);
 
@@ -339,6 +346,9 @@ std::string ReportPrintable::getCheckJsonList(BsmCheck Check){
     JsonWriter jw;
 
     jw.openJsonElement("BsmCheck",true);
+
+    tempStr = jw.getSimpleTag("rpP", std::to_string(Check.getProximityPlausibility()),true);
+    jw.addTagToElement("BsmCheck", tempStr);
 
     tempStr = jw.getSimpleTag("rP", std::to_string(Check.getRangePlausibility()),true);
     jw.addTagToElement("BsmCheck", tempStr);

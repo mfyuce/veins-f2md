@@ -31,7 +31,7 @@ class AppPrintable {
 private:
 
     char name[32];
-
+    double flagsProximityPlausibility_1 = 0;
     double flagsRangePlausibility_1 = 0;
     double flagsPositionPlausibility_1 = 0;
     double flagsSpeedPlausibility_1 = 0;
@@ -51,6 +51,7 @@ private:
     double flagskalmanPACS_1=0;
     double flagskalmanSCC_1=0;
 
+    double flagsProximityPlausibility_2 = 0;
     double flagsRangePlausibility_2 = 0;
     double flagsPositionPlausibility_2 = 0;
     double flagsSpeedPlausibility_2 = 0;

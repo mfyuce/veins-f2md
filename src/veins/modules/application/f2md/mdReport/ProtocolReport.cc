@@ -71,7 +71,7 @@ void ProtocolReport::addEvidence(BasicSafetyMessage myBsm,
     }
 
 
-    if (reportedCheck.getRangePlausibility() < 1) {
+    if (reportedCheck.getProximityPlausibility() < 1 || reportedCheck.getRangePlausibility() < 1 || reportedCheck.getProximityPlausibility() < 1) {
         addBsmToList(myBsm, BsmCheck());
         myBsmAdded = true;
     }

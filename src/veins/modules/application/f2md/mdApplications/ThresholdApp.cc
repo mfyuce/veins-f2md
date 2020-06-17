@@ -47,7 +47,8 @@ bool ThresholdApp::CheckNodeForReport(unsigned long myPseudonym,
         }
     }
 
-    if (checkFailed || bsmCheck->getRangePlausibility() <= Threshold
+    if (checkFailed || bsmCheck->getProximityPlausibility() <= Threshold
+    || bsmCheck->getRangePlausibility() <= Threshold
             || bsmCheck->getPositionConsistancy() <= Threshold
             || bsmCheck->getPositionSpeedConsistancy() <= Threshold
             || bsmCheck->getPositionSpeedMaxConsistancy() <= Threshold
@@ -62,8 +63,7 @@ bool ThresholdApp::CheckNodeForReport(unsigned long myPseudonym,
             || bsmCheck->getKalmanPSCSS() <= Threshold
             || bsmCheck->getKalmanPCC() <= Threshold
             || bsmCheck->getKalmanPACS() <= Threshold
-            || bsmCheck->getKalmanSCC() <= Threshold
-            || bsmCheck->getRangePlausibility() <= Threshold) {
+            || bsmCheck->getKalmanSCC() <= Threshold) {
         checkFailed = true;
     }
 

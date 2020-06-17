@@ -34,7 +34,6 @@
 
 class F2MDParameters {
 public:
-
     //Simulation Parameters
     std::string serialNumber = "IRT-DEMO";
     std::string savePath = "../../../../mdmSave/";
@@ -65,16 +64,15 @@ public:
 
     attackTypes::Attacks LOCAL_ATTACK_TYPE = attackTypes::RandomSpeed;
     attackTypes::Attacks MixLocalAttacksList[19] = {attackTypes::ConstPos,
-            attackTypes::Disruptive, attackTypes::RandomPos,
-            attackTypes::StaleMessages, attackTypes::DoSRandomSybil,
-            attackTypes::ConstPosOffset, attackTypes::ConstSpeed,
-            attackTypes::DoS, attackTypes::RandomPosOffset,
-            attackTypes::DataReplaySybil, attackTypes::DoSDisruptive,
-            attackTypes::ConstSpeedOffset, attackTypes::RandomSpeedOffset,
-            attackTypes::EventualStop, attackTypes::DoSDisruptiveSybil,
-            attackTypes::DataReplay, attackTypes::DoSRandom,
-            attackTypes::GridSybil, attackTypes::RandomSpeed};
-
+        attackTypes::Disruptive, attackTypes::RandomPos,
+        attackTypes::StaleMessages, attackTypes::DoSRandomSybil,
+        attackTypes::ConstPosOffset, attackTypes::ConstSpeed,
+        attackTypes::DoS, attackTypes::RandomPosOffset,
+        attackTypes::DataReplaySybil, attackTypes::DoSDisruptive,
+        attackTypes::ConstSpeedOffset, attackTypes::RandomSpeedOffset,
+        attackTypes::EventualStop, attackTypes::DoSDisruptiveSybil,
+        attackTypes::DataReplay, attackTypes::DoSRandom,
+        attackTypes::GridSybil, attackTypes::RandomSpeed};
 
     //ConstPos, ConstPosOffset, RandomPos, RandomPosOffset,
     //ConstSpeed, ConstSpeedOffset, RandomSpeed, RandomSpeedOffset,
@@ -83,11 +81,11 @@ public:
     //GridSybil, DataReplaySybil, DoSRandomSybil, DoSDisruptiveSybil,
 
     double GLOBAL_ATTACKER_PROB = 0.0;
-    attackTypes::Attacks GLOBAL_ATTACK_TYPE =attackTypes::MAStress;
+    attackTypes::Attacks GLOBAL_ATTACK_TYPE = attackTypes::MAStress;
     // 1 MAStress
 
     bool EnablePC = false;
-    pseudoChangeTypes::PseudoChange PC_TYPE=pseudoChangeTypes::Car2car;
+    pseudoChangeTypes::PseudoChange PC_TYPE = pseudoChangeTypes::Car2car;
     // Periodical, Disposable, DistanceBased, Random, Car2car
     //Detection Application
 
@@ -97,9 +95,9 @@ public:
     bool SaveStatsV2 = true;
 
     mdChecksVersionTypes::ChecksVersion checksVersionV1 =
-            mdChecksVersionTypes::ExperiChecks;
+        mdChecksVersionTypes::ExperiChecks;
     mdChecksVersionTypes::ChecksVersion checksVersionV2 =
-            mdChecksVersionTypes::ExperiChecks;
+        mdChecksVersionTypes::ExperiChecks;
 
     mdAppTypes::App appTypeV1 = mdAppTypes::ThresholdApp;
     mdAppTypes::App appTypeV2 = mdAppTypes::BehavioralApp;
@@ -136,11 +134,15 @@ public:
     //Simulation Parameters
 
     // ------ Detection Parameters -- Start
+    double MAX_PROXIMITY_RANGE_L = 30;
+    double MAX_PROXIMITY_RANGE_W = 3;
+    double MAX_PROXIMITY_DISTANCE = 2;
+
     double MAX_CONFIDENCE_RANGE = 10;
     double MAX_PLAUSIBLE_RANGE = 420;
     double MAX_TIME_DELTA = 3.1;
     double MAX_DELTA_INTER = 2.0;
-    double MAX_SA_RANGE = 210;
+    double MAX_SA_RANGE = 420;
     double MAX_SA_TIME = 2.1;
     double MAX_KALMAN_TIME = 3.1;
     double KALMAN_POS_RANGE = 1.0;
@@ -200,9 +202,6 @@ public:
     double CollectionPeriod = 10;
     double UntolerancePeriod = 5;
     //------ Report Parameters -- End
-
-
 };
 
 #endif
-

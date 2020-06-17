@@ -66,6 +66,8 @@ using namespace std::chrono;
 
 #include <veins/modules/application/f2md/F2MDParameters.h>
 
+#include <unordered_map>
+
 #define mlHostV1 "localhost"
 #define mlHostV2 "localhost"
 #define mlPortV1 9997
@@ -80,6 +82,8 @@ static double accusedClearTime = 0;
 
 static bool linkInit = false;
 static LinkControl linkControl = LinkControl();
+
+static std::unordered_map<LAddress::L2Type,veins::Coord> realDynamicMap;
 
 static bool setDate = false;
 static std::string curDate;
@@ -108,6 +112,8 @@ static F2MDParameters params;
 
 static int LastLocalAttackIndex = -1;
 static double VeReMiSliceStartTime = 0;
+
+
 
 class JosephVeinsApp: public F2MDBaseApplLayer {
 private:
@@ -159,8 +165,6 @@ protected:
 
     pseudoChangeTypes::PseudoChange myPcType;
     PCPolicy pcPolicy;
-
-
 
     typedef std::list<Obstacle*> ObstacleGridCell;
     typedef std::vector<ObstacleGridCell> ObstacleGridRow;
@@ -240,7 +244,6 @@ protected:
     double deltaSpeed = 0;
     double deltaHeading = 0;
     double deltaAccel = 0;
-
 
     /* F2MD */
 
