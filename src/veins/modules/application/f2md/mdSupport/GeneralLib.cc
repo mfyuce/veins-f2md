@@ -28,11 +28,10 @@ double GeneralLib::RandomDouble(double fMin, double fMax)
 
 int GeneralLib::RandomInt(int min, int max)
 {
-    struct timespec tm;
-    clock_gettime(CLOCK_REALTIME, &tm);
-
-    random::mt19937 rng(tm.tv_nsec);
-    std::uniform_int_distribution<> one(min,max);
+    std::random_device rd;
+    
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<> one(min, max);
 
     int guess = one(rng);
     return guess;
