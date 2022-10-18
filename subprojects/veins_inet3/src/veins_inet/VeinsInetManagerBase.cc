@@ -48,7 +48,7 @@ void VeinsInetManagerBase::updateModulePosition(cModule* mod, const Coord& p, co
     for (cModule::SubmoduleIterator iter(mod); !iter.end(); iter++) {
         cModule* submod = *iter;
         VeinsInetMobility* inetmm = dynamic_cast<VeinsInetMobility*>(submod);
-        if (!inetmm) return;
+        if (!inetmm) continue;
         inetmm->nextPosition(inet::Coord(p.x, p.y), edge, speed, acceleration, heading.getRad());
     }
 }
